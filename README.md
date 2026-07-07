@@ -1,17 +1,38 @@
 # vue-ccusage-web
 
-Claude Code Token 用量顯示面板 — 本地執行的 Vue 應用程式,
-透過 `npx ccusage blocks --json` 讀取目前 5 小時 block 的使用狀況,以儀表板呈現。
+![Built with Claude Code](https://img.shields.io/badge/built%20with-Claude%20Code-d97757)
+![Human Supervised](https://img.shields.io/badge/human-supervised-2a78d6)
+![Vibecoding](https://img.shields.io/badge/workflow-vibecoding-1baf7a)
+
+Claude Code Token 用量顯示面板 — 本地執行的 Vue 應用程式，
+透過 `npx ccusage blocks --json` 讀取目前 5 小時 block 的以儀表板呈現使用狀況
+
+## 開發方式聲明
+
+本專案為 AI 輔助開發(vibecoding)實驗:主要程式碼由 Claude Code
+(Anthropic Claude Fable 5)產生,由 [@sweetmochi](https://github.com/sweetmochi)
+全程監督與參與——包含需求定義、技術選型決策、逐階段程式碼審閱、
+手動修改與重構,以及每階段的實際執行驗證。
+
+分工方式:
+
+- **架構規劃與 UI 設計方向**:人類決策,AI 提案
+- **程式碼撰寫**:AI 產生初版,人類逐階段審閱並直接修改(進度見下方「開發階段」checklist)
+- **型別註解與文件**:人類與 AI 共同維護
+- **驗證**:每階段完成皆以 `npm run build` 型別檢查與實際執行確認
+
+Git 記錄中由 AI 參與的 commit 皆帶有 `Co-Authored-By: Claude` 署名,
+可與人類手動修改的 commit 區分。
 
 ## 功能規劃
 
-- **剩餘時間圓環**:目前 block 距離重置(`endTime`)的倒數,daisyUI `radial-progress`
-- **Token 用量儀表**:`totalTokens` 與自訂/歷史上限(`--token-limit max`)的比例,vue-echarts gauge
-- **燃燒速率(Burn Rate)**:`tokensPerMinute`、`costPerHour` 即時數值 + 迷你趨勢線
-- **預估用量(Projection)**:block 結束時的預估 token 總量與費用
-- **Token 組成分布**:input / output / cache read / cache creation 圓餅圖
-- **自動輪詢**:每 30 秒重新取得資料,無需手動刷新
-- **暗色主題**:daisyUI theme 切換
+- **剩餘時間圓環**：目前 block 距離重置 `endTime` 的倒數，daisyUI `radial-progress`
+- **Token 用量儀表**：`totalTokens` 與自訂 / 歷史上限 (`--token-limit max`) 的比例，vue-echarts gauge
+- **燃燒速率 (Burn Rate)**：`tokensPerMinute`、`costPerHour` 即時數值 + 迷你趨勢線
+- **預估用量 (Projection)**：block 結束時的預估 token 總量與費用
+- **Token 組成分布**：input / output / cache read / cache creation 圓餅圖
+- **自動輪詢**：每 30 秒重新取得資料,無需手動刷新
+- **暗色主題**：daisyUI theme 切換
 
 ## 技術架構
 
@@ -21,7 +42,7 @@ Claude Code Token 用量顯示面板 — 本地執行的 Vue 應用程式,
 | 建置工具 | Vite | dev server 同時擔任本地 API |
 | 樣式 | Tailwind CSS 4 + daisyUI 5 | stat / progress / radial-progress 元件 |
 | 圖表 | vue-echarts (ECharts) | gauge、pie、sparkline |
-| 資料來源 | `npx ccusage blocks --json --active` | 由 Vite middleware 在 Node 端執行 |
+| 資料來源 | `npx ccusage blocks --json` | 由 Vite middleware 在 Node 端執行(全部 blocks,供歷史上限計算) |
 
 ### 資料流
 
@@ -54,8 +75,14 @@ vue-ccusage-web/
 │   ├── style.css             # Tailwind / daisyUI 進入點
 │   ├── types/
 │   │   └── ccusage.ts        # blocks JSON 的 TypeScript 型別
+│   ├── lib/
+│   │   ├── echarts.ts        # ECharts 按需註冊
+│   │   ├── chartTheme.ts     # 圖表配色(明/暗,經 CVD 驗證)
+│   │   └── format.ts         # 數字 / 時間格式化
 │   ├── composables/
-│   │   └── useCcusage.ts     # 輪詢 /api/blocks、衍生值計算
+│   │   ├── useCcusage.ts     # 輪詢 /api/blocks、衍生值計算
+│   │   ├── useBurnRateHistory.ts # burnRate 取樣累積(趨勢線)
+│   │   └── useIsDark.ts      # prefers-color-scheme 偵測
 │   └── components/
 │       ├── TimeRemaining.vue # 剩餘時間圓環
 │       ├── TokenGauge.vue    # token 用量儀表
@@ -88,8 +115,9 @@ vue-ccusage-web/
 }
 ```
 
-> 注意:ccusage 是由本機記錄推算,**沒有官方「剩餘額度」數字**。
-> 百分比上限採 `--token-limit max`(歷史最高 block)或使用者自訂值。
+> 注意:ccusage 是由本機記錄推算，**沒有官方「剩餘額度」數字**
+
+> 百分比上限採 `--token-limit max` (歷史最高 block)
 
 ## 使用方式
 
@@ -104,5 +132,5 @@ npm run dev      # 啟動面板(含本地 API)
 - [x] Vite + Vue + Tailwind/daisyUI 腳手架
 - [x] ccusage API middleware
 - [x] useCcusage composable 與型別定義
-- [ ] 儀表板元件 ← 目前位置
-- [ ] 主題與細節調整
+- [x] 儀表板元件
+- [ ] 主題與細節調整 ← 目前位置

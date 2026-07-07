@@ -3,8 +3,8 @@ import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 
-// 於 dev server 註冊 GET /api/blocks:
-// 瀏覽器無法執行 CLI,由 Node 端跑 ccusage 並把 JSON 轉交給前端
+// 於 dev server 註冊 GET /api/blocks
+// 瀏覽器無法執行 CLI，由 Node 端跑 ccusage 並把 JSON 轉交給前端
 function ccusageApi(): Plugin {
   return {
     name: 'ccusage-api',
@@ -12,8 +12,10 @@ function ccusageApi(): Plugin {
       server.middlewares.use('/api/blocks', (_req, res) => {
         execFile(
           'npx',
-          ['ccusage', 'blocks', '--json', '--active'],
-          // Windows 上 npx 是 npx.cmd,需經由 shell 解析
+          // 不加 --active
+          // 需要全部 blocks 才能算 token 上限
+          ['ccusage', 'blocks', '--json'],
+          // Windows 上 npx 是 npx.cmd，需經由 shell 解析
           { shell: true, windowsHide: true, timeout: 30_000 },
           (err, stdout, stderr) => {
             res.setHeader('Content-Type', 'application/json')

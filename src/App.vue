@@ -1,60 +1,53 @@
 <script setup lang="ts">
-// 暫時的資料流驗證頁,階段 5 會替換成正式儀表板版面
+// 儀表板版面:單一 useCcusage 資料源,五個展示元件以 props 接收
 import { useCcusage } from './composables/useCcusage'
+import { useBurnRateHistory } from './composables/useBurnRateHistory'
+import TimeRemaining from './components/TimeRemaining.vue'
+import TokenGauge from './components/TokenGauge.vue'
+import TokenBreakdown from './components/TokenBreakdown.vue'
+import BurnRate from './components/BurnRate.vue'
+import Projection from './components/Projection.vue'
 
-const { block, error, loading, updatedAt, remainingMs } = useCcusage()
-
-function formatRemaining(ms: number): string {
-  const h = Math.floor(ms / 3_600_000)
-  const m = Math.floor((ms % 3_600_000) / 60_000)
-  const s = Math.floor((ms % 60_000) / 1_000)
-  return `${h} 小時 ${m} 分 ${s} 秒`
-}
+const { block, tokenLimit, error, loading, updatedAt, remainingMs, remainingRatio } =
+  useCcusage()
+const { samples } = useBurnRateHistory(block)
 </script>
 
 <template>
-  <main class="min-h-screen bg-base-200 flex items-center justify-center p-4">
-    <div class="card bg-base-100 shadow-md w-full max-w-md">
-      <div class="card-body">
-        <h1 class="card-title">Claude Token 用量面板</h1>
+  <main class="min-h-screen bg-base-200 p-4 md:p-8">
+    <div class="mx-auto max-w-5xl space-y-4">
+      <header class="flex flex-wrap items-baseline justify-between gap-2">
+        <h1 class="text-xl font-bold">Claude Token 用量面板</h1>
+        <p v-if="updatedAt" class="text-xs text-base-content/50">
+          更新於 {{ updatedAt.toLocaleTimeString() }}
+        </p>
+      </header>
 
-        <div v-if="loading" class="flex items-center gap-2 text-base-content/70">
-          <span class="loading loading-spinner loading-sm"></span>
-          讀取 ccusage 資料中…
-        </div>
-
-        <div v-else-if="error" class="alert alert-error text-sm">
-          <span>讀取失敗:{{ error }}</span>
-        </div>
-
-        <template v-else-if="block">
-          <div class="stats stats-vertical">
-            <div class="stat px-0">
-              <div class="stat-title">距離重置</div>
-              <div class="stat-value text-2xl tabular-nums">
-                {{ formatRemaining(remainingMs) }}
-              </div>
-            </div>
-            <div class="stat px-0">
-              <div class="stat-title">Token 已用</div>
-              <div class="stat-value text-2xl tabular-nums">
-                {{ block.totalTokens.toLocaleString() }}
-              </div>
-            </div>
-            <div class="stat px-0">
-              <div class="stat-title">費用</div>
-              <div class="stat-value text-2xl tabular-nums">
-                ${{ block.costUSD.toFixed(2) }}
-              </div>
-            </div>
-          </div>
-          <p class="text-xs text-base-content/50">
-            更新於 {{ updatedAt?.toLocaleTimeString() }}
-          </p>
-        </template>
-
-        <div v-else class="text-base-content/70">目前沒有進行中的 block。</div>
+      <div v-if="loading" class="flex items-center gap-2 text-base-content/70">
+        <span class="loading loading-spinner loading-sm"></span>
+        讀取 ccusage 資料中…
       </div>
+
+      <div v-else-if="error && !block" class="alert alert-error text-sm">
+        <span>讀取失敗：{{ error }}</span>
+      </div>
+
+      <template v-else-if="block">
+        <!-- 輪詢失敗時保留上次資料，只提示更新中斷 -->
+        <div v-if="error" class="alert alert-warning text-sm">
+          <span>更新失敗，顯示上次資料：{{ error }}</span>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <TimeRemaining :remaining-ms="remainingMs" :remaining-ratio="remainingRatio" />
+          <TokenGauge :total-tokens="block.totalTokens" :limit="tokenLimit" />
+          <TokenBreakdown :token-counts="block.tokenCounts" />
+          <BurnRate :burn-rate="block.burnRate ?? null" :samples="samples" />
+          <Projection :projection="block.projection ?? null" />
+        </div>
+      </template>
+
+      <div v-else class="text-base-content/70">目前沒有進行中的 block。</div>
     </div>
   </main>
 </template>
