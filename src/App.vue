@@ -8,19 +8,44 @@ import TokenGauge from './components/TokenGauge.vue'
 
 import { useBurnRateHistory } from './composables/useBurnRateHistory'
 import { useCcusage } from './composables/useCcusage'
+import { useTheme, type ThemeMode } from './composables/useTheme'
 
-const { block, tokenLimit, error, loading, updatedAt, remainingMs, remainingRatio } = useCcusage()
+const { block, tokenLimit, error, loading, updatedAt, remainingMs, remainingRatio, refresh } =
+  useCcusage()
 const { samples } = useBurnRateHistory(block)
+const { mode } = useTheme()
+
+const themeOptions: { value: ThemeMode; label: string }[] = [
+  { value: 'system', label: '系統' },
+  { value: 'light', label: '亮' },
+  { value: 'dark', label: '暗' },
+]
 </script>
 
 <template>
   <main class="min-h-screen bg-base-200 p-4 md:p-8">
     <div class="mx-auto max-w-5xl space-y-4">
-      <header class="flex flex-wrap items-baseline justify-between gap-2">
+      <header class="flex flex-wrap items-center justify-between gap-2">
         <h1 class="text-xl font-bold">Claude Token 用量面板</h1>
-        <p v-if="updatedAt" class="text-xs text-base-content/50">
-          更新於 {{ updatedAt.toLocaleTimeString() }}
-        </p>
+        <div class="flex items-center gap-2">
+          <p v-if="updatedAt" class="text-xs text-base-content/50">
+            更新於 {{ updatedAt.toLocaleTimeString() }}
+          </p>
+          <button class="btn btn-ghost btn-xs" aria-label="立即重新整理" @click="refresh()">
+            ↻
+          </button>
+          <div class="join" role="group" aria-label="主題切換">
+            <button
+              v-for="opt in themeOptions"
+              :key="opt.value"
+              class="btn btn-xs join-item"
+              :class="{ 'btn-active': mode === opt.value }"
+              @click="mode = opt.value"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+        </div>
       </header>
 
       <div v-if="loading" class="flex items-center gap-2 text-base-content/70">

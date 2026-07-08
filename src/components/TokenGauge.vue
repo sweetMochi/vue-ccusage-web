@@ -2,7 +2,7 @@
 // Token 用量面板
 import type { EChartsOption } from 'echarts'
 import { computed } from 'vue'
-import { useIsDark } from '../composables/useIsDark'
+import { useTheme } from '../composables/useTheme'
 import { darkTheme, lightTheme } from '../lib/chartTheme'
 import { VChart } from '../lib/echarts'
 import { formatTokens } from '../lib/format'
@@ -19,7 +19,7 @@ const props = defineProps<{
   limit: number | null
 }>()
 
-const isDark = useIsDark()
+const { isDark } = useTheme()
 const theme = computed(() => (isDark.value ? darkTheme : lightTheme))
 
 const percent = computed(() =>

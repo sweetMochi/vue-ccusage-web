@@ -3,7 +3,7 @@
 // 顏色依固定 slot 順序對應類別 (輸入 (input)=藍、輸出=水綠、快取讀取=黃、快取寫入=綠),不隨資料變動
 import type { EChartsOption } from 'echarts'
 import { computed } from 'vue'
-import { useIsDark } from '../composables/useIsDark'
+import { useTheme } from '../composables/useTheme'
 import { darkTheme, lightTheme } from '../lib/chartTheme'
 import { VChart } from '../lib/echarts'
 import { formatTokens } from '../lib/format'
@@ -13,7 +13,7 @@ const props = defineProps<{
   tokenCounts: CcusageTokenCounts
 }>()
 
-const isDark = useIsDark()
+const { isDark } = useTheme()
 const theme = computed(() => (isDark.value ? darkTheme : lightTheme))
 
 const option = computed(() => {

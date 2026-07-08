@@ -1,4 +1,4 @@
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { CcusageBlock, CcusageBlocksResponse } from '../types/ccusage'
 
 /**
@@ -63,6 +63,11 @@ export function useCcusage(intervalMs = 30_000) {
   const remainingMs = computed(() => {
     if (!block.value) return 0
     return Math.max(0, new Date(block.value.endTime).getTime() - now.value)
+  })
+
+  // 倒數歸零時立即抓新 block，不等下一輪輪詢 (最長 30 秒)
+  watch(remainingMs, (ms, prev) => {
+    if (ms === 0 && prev > 0) void refresh()
   })
 
   /** 剩餘時間比例 (0 – 1)，分母取 block 實際時間 */

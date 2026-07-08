@@ -31,8 +31,8 @@ Git 記錄中由 AI 參與的 commit 皆帶有 `Co-Authored-By: Claude` 署名,
 - **燃燒速率 (Burn Rate)**：`tokensPerMinute`、`costPerHour` 即時數值 + 迷你趨勢線
 - **預估用量 (Projection)**：block 結束時的預估 token 總量與費用
 - **Token 組成分布**：input / output / cache read / cache creation 圓餅圖
-- **自動輪詢**：每 30 秒重新取得資料,無需手動刷新
-- **暗色主題**：daisyUI theme 切換
+- **自動輪詢**：每 30 秒重新取得資料，倒數歸零時立即更新，另有手動重新整理鈕
+- **主題切換**：跟隨系統 / 亮 / 暗三態，選擇記錄於 localStorage，圖表配色同步切換
 
 ## 技術架構
 
@@ -82,7 +82,7 @@ vue-ccusage-web/
 │   ├── composables/
 │   │   ├── useCcusage.ts     # 輪詢 /api/blocks、衍生值計算
 │   │   ├── useBurnRateHistory.ts # burnRate 取樣累積(趨勢線)
-│   │   └── useIsDark.ts      # prefers-color-scheme 偵測
+│   │   └── useTheme.ts       # 三態主題(跟隨系統/亮/暗)單一真相來源
 │   └── components/
 │       ├── TimeRemaining.vue # 剩餘時間圓環
 │       ├── TokenGauge.vue    # token 用量儀表
@@ -128,6 +128,9 @@ npm install
 npm run dev      # 啟動面板(含本地 API)
 ```
 
+> 已知限制:`/api/blocks` 只存在於 dev server,
+> `npm run preview` 或靜態部署無法取得資料。
+
 ## 開發階段
 
 - [x] 專案大綱(README / package.json)
@@ -135,4 +138,4 @@ npm run dev      # 啟動面板(含本地 API)
 - [x] ccusage API middleware
 - [x] useCcusage composable 與型別定義
 - [x] 儀表板元件
-- [ ] 主題與細節調整 ← 目前位置
+- [x] 主題與細節調整

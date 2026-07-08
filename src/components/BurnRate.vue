@@ -2,7 +2,7 @@
 // 燃燒速率：即時數值 + 隨輪詢累積的迷你趨勢線
 import type { EChartsOption } from 'echarts'
 import { computed } from 'vue'
-import { useIsDark } from '../composables/useIsDark'
+import { useTheme } from '../composables/useTheme'
 import { darkTheme, lightTheme } from '../lib/chartTheme'
 import { VChart } from '../lib/echarts'
 import { formatTokens, formatUsd } from '../lib/format'
@@ -16,7 +16,7 @@ const props = defineProps<{
   samples: BurnRateSample[]
 }>()
 
-const isDark = useIsDark()
+const { isDark } = useTheme()
 const theme = computed(() => (isDark.value ? darkTheme : lightTheme))
 
 const option = computed(() => {
