@@ -1,11 +1,6 @@
 import { ref, watch, type Ref } from 'vue'
 import type { CcusageBlock } from '../types/ccusage'
-
-export interface BurnRateSample {
-  /** 取樣時間 (毫秒) */
-  time: number
-  tokensPerMinute: number
-}
+import type { BurnRateSample } from '../types/components'
 
 /** 30 秒一筆，60 筆約涵蓋 30 分鐘 */
 const MAX_SAMPLES = 60

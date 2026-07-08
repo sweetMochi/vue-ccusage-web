@@ -10,6 +10,7 @@ defineProps<{
 </script>
 
 <template>
+  <!-- Projection - start -->
   <div class="card bg-base-100 shadow-md">
     <div class="card-body gap-3">
       <h2 class="card-title text-sm font-medium text-base-content/70">預估用量</h2>
@@ -33,4 +34,5 @@ defineProps<{
       <p v-else class="text-sm text-base-content/50">尚無預估資料</p>
     </div>
   </div>
+  <!-- Projection - end -->
 </template>

@@ -1,12 +1,13 @@
 <script setup lang="ts">
-// Token 組成分布:四類 token 的環圈圖
-// 顏色依固定 slot 順序對應類別(輸入=藍、輸出=水綠、快取讀取=黃、快取寫入=綠),不隨資料變動
+// Token 組成分布：四類 token 的圓餅圖
+// 顏色依固定 slot 順序對應類別 (輸入 (input)=藍、輸出=水綠、快取讀取=黃、快取寫入=綠),不隨資料變動
+import type { EChartsOption } from 'echarts'
 import { computed } from 'vue'
-import type { CcusageTokenCounts } from '../types/ccusage'
-import { VChart } from '../lib/echarts'
-import { darkTheme, lightTheme } from '../lib/chartTheme'
 import { useIsDark } from '../composables/useIsDark'
+import { darkTheme, lightTheme } from '../lib/chartTheme'
+import { VChart } from '../lib/echarts'
 import { formatTokens } from '../lib/format'
+import type { CcusageTokenCounts } from '../types/ccusage'
 
 const props = defineProps<{
   tokenCounts: CcusageTokenCounts
@@ -18,12 +19,13 @@ const theme = computed(() => (isDark.value ? darkTheme : lightTheme))
 const option = computed(() => {
   const t = theme.value
   const c = props.tokenCounts
+
   return {
     tooltip: {
       trigger: 'item',
       formatter: (p: unknown) => {
         const item = p as { name: string; value: number; percent: number }
-        return `${item.name}:${formatTokens(item.value)}(${item.percent}%)`
+        return `${item.name}：${formatTokens(item.value)} (${item.percent}%)`
       },
     },
     legend: {
@@ -58,15 +60,17 @@ const option = computed(() => {
         ],
       },
     ],
-  }
+  } as EChartsOption
 })
 </script>
 
 <template>
+  <!-- TokenBreakdown - start -->
   <div class="card bg-base-100 shadow-md">
     <div class="card-body gap-1">
       <h2 class="card-title text-sm font-medium text-base-content/70">Token 組成</h2>
       <VChart class="h-56 w-full" :option="option" autoresize />
     </div>
   </div>
+  <!-- TokenBreakdown - end -->
 </template>

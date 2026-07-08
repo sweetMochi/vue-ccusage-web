@@ -36,13 +36,13 @@ Git 記錄中由 AI 參與的 commit 皆帶有 `Co-Authored-By: Claude` 署名,
 
 ## 技術架構
 
-| 層 | 技術 | 說明 |
-|----|------|------|
-| 前端框架 | Vue 3 (`<script setup>` + TypeScript) | SPA,單頁儀表板 |
-| 建置工具 | Vite | dev server 同時擔任本地 API |
-| 樣式 | Tailwind CSS 4 + daisyUI 5 | stat / progress / radial-progress 元件 |
-| 圖表 | vue-echarts (ECharts) | gauge、pie、sparkline |
-| 資料來源 | `npx ccusage blocks --json` | 由 Vite middleware 在 Node 端執行(全部 blocks,供歷史上限計算) |
+| 層       | 技術                                  | 說明                                                          |
+| -------- | ------------------------------------- | ------------------------------------------------------------- |
+| 前端框架 | Vue 3 (`<script setup>` + TypeScript) | SPA,單頁儀表板                                                |
+| 建置工具 | Vite                                  | dev server 同時擔任本地 API                                   |
+| 樣式     | Tailwind CSS 4 + daisyUI 5            | stat / progress / radial-progress 元件                        |
+| 圖表     | vue-echarts (ECharts)                 | gauge、pie、sparkline                                         |
+| 資料來源 | `npx ccusage blocks --json`           | 由 Vite middleware 在 Node 端執行(全部 blocks,供歷史上限計算) |
 
 ### 資料流
 
@@ -96,22 +96,24 @@ vue-ccusage-web/
 
 ```jsonc
 {
-  "blocks": [{
-    "isActive": true,
-    "startTime": "2026-07-06T14:00:00.000Z",
-    "endTime":   "2026-07-06T19:00:00.000Z",   // block 重置時間
-    "totalTokens": 532518,
-    "costUSD": 0.30,
-    "tokenCounts": {
-      "inputTokens": 28,
-      "outputTokens": 6372,
-      "cacheReadInputTokens": 491495,
-      "cacheCreationInputTokens": 34623
+  "blocks": [
+    {
+      "isActive": true,
+      "startTime": "2026-07-06T14:00:00.000Z",
+      "endTime": "2026-07-06T19:00:00.000Z", // block 重置時間
+      "totalTokens": 532518,
+      "costUSD": 0.3,
+      "tokenCounts": {
+        "inputTokens": 28,
+        "outputTokens": 6372,
+        "cacheReadInputTokens": 491495,
+        "cacheCreationInputTokens": 34623,
+      },
+      "burnRate": { "tokensPerMinute": 24522, "costPerHour": 0.83 },
+      "projection": { "remainingMinutes": 258, "totalTokens": 6859329, "totalCost": 3.87 },
+      "models": ["claude-sonnet-5"],
     },
-    "burnRate":   { "tokensPerMinute": 24522, "costPerHour": 0.83 },
-    "projection": { "remainingMinutes": 258, "totalTokens": 6859329, "totalCost": 3.87 },
-    "models": ["claude-sonnet-5"]
-  }]
+  ],
 }
 ```
 

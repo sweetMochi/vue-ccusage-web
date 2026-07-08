@@ -28,15 +28,16 @@ export function useCcusage(intervalMs = 30_000) {
     try {
       const res = await fetch('/api/blocks')
       const data = (await res.json()) as CcusageBlocksResponse & { error?: string }
-      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
+
+      if (!res.ok) {
+        throw new Error(data.error ?? `HTTP ${res.status}`)
+      }
 
       const blocks = data.blocks.filter((b) => !b.isGap)
 
       block.value = blocks.find((b) => b.isActive) ?? null
 
-      tokenLimit.value = blocks.length
-        ? Math.max(...blocks.map((b) => b.totalTokens))
-        : null
+      tokenLimit.value = blocks.length ? Math.max(...blocks.map((b) => b.totalTokens)) : null
 
       updatedAt.value = new Date()
       error.value = null
@@ -64,13 +65,12 @@ export function useCcusage(intervalMs = 30_000) {
     return Math.max(0, new Date(block.value.endTime).getTime() - now.value)
   })
 
-  /** 剩餘時間比例 0 – 1 (圓環用)，分母取 block 實際時間 */
+  /** 剩餘時間比例 (0 – 1)，分母取 block 實際時間 */
   const remainingRatio = computed(() => {
     if (!block.value) return 0
 
     const durationMs =
-      new Date(block.value.endTime).getTime() -
-      new Date(block.value.startTime).getTime()
+      new Date(block.value.endTime).getTime() - new Date(block.value.startTime).getTime()
 
     return durationMs > 0 ? remainingMs.value / durationMs : 0
   })

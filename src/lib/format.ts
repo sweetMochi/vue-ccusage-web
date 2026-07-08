@@ -1,4 +1,6 @@
-/** 毫秒 → `H:MM:SS` 倒數字串 */
+/**
+ * 毫秒轉換成 `H:MM:SS` 倒數
+ */
 export function formatCountdown(ms: number): string {
   const h = Math.floor(ms / 3_600_000)
   const m = Math.floor((ms % 3_600_000) / 60_000)
@@ -6,12 +8,16 @@ export function formatCountdown(ms: number): string {
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
-/** token 數的千分位字串 */
+/**
+ * token 數的千分位格式化
+ */
 export function formatTokens(n: number): string {
   return Math.round(n).toLocaleString('en-US')
 }
 
-/** 美元金額,固定兩位小數 */
+/**
+ * 美元金額，固定兩位小數
+ */
 export function formatUsd(n: number): string {
   return `$${n.toFixed(2)}`
 }

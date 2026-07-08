@@ -2,19 +2,17 @@
 // 欄位對照 README「ccusage 回傳資料」一節
 
 /**
- * block 內四類 token 的用量統計。
- * 四類計費差異極大 (以 input 基本價為 1x)
- * cache read 約 0.1x、cache creation 約 1.25x、output 約 5x,
- * 因此加總值 (totalTokens) 不能直接代表費用，看 costUSD 才準。
+ * block 內四類 token 的用量統計
+ * 加總值 (totalTokens) 不能直接代表費用，看 costUSD 才準。
  */
 export interface CcusageTokenCounts {
-  /** 未快取的新輸入 tokens (全價) */
+  /** 未快取的新輸入 `input tokens` (x1) */
   inputTokens: number
-  /** 模型產生的回覆 tokens (最貴，約 input 的 5 倍價) */
+  /** 模型產生的回覆 `output tokens` (x5) */
   outputTokens: number
-  /** 寫入 prompt 快取的 tokens (約 1.25x，付溢價換之後的折扣) */
+  /** 寫入 prompt 快取的 `cache creation tokens` (x1.25 付溢價換之後的折扣) */
   cacheCreationInputTokens: number
-  /** 從 prompt 快取讀取的 tokens (約 0.1x，通常佔比最大) */
+  /** 從 prompt 快取讀取的 `cache read tokens` (x0.1 通常佔比最大) */
   cacheReadInputTokens: number
 }
 
@@ -49,22 +47,23 @@ export interface CcusageBlock {
   /** block 起點 (ISO 8601)，同 startTime */
   id: string
   startTime: string
-  /** startTime + 5 小時，即用量重置時間 */
+  /** 用量重置時間 */
   endTime: string
-  /** block 內最後一筆記錄的時間 */
+  /** 最後一筆記錄的時間 */
   actualEndTime?: string
+  /** 是否為目前的 block */
   isActive: boolean
   /** 閒置空隙區段 (非實際用量) */
   isGap: boolean
   /** 記錄筆數 */
   entries: number
-  /** block 內的總費用 (USD) */
+  /** 總費用 (USD) */
   costUSD: number
-  /** block 內的模型清單 */
+  /** 模型清單 */
   models: string[]
-  /** block 內四類 token 的加總統計 */
+  /** token 總計 */
   tokenCounts: CcusageTokenCounts
-  /** tokenCounts 四項加總 */
+  /** 總 token 數 */
   totalTokens: number
   /** 僅 active block 才有 */
   burnRate?: CcusageBurnRate | null

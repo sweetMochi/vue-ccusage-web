@@ -25,7 +25,7 @@ function ccusageApi(): Plugin {
               return
             }
             res.end(stdout)
-          },
+          }
         )
       })
     },
@@ -34,4 +34,7 @@ function ccusageApi(): Plugin {
 
 export default defineConfig({
   plugins: [vue(), tailwindcss(), ccusageApi()],
+  server: {
+    open: true,
+  },
 })

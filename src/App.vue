@@ -1,15 +1,15 @@
 <script setup lang="ts">
-// 儀表板版面:單一 useCcusage 資料源,五個展示元件以 props 接收
-import { useCcusage } from './composables/useCcusage'
-import { useBurnRateHistory } from './composables/useBurnRateHistory'
-import TimeRemaining from './components/TimeRemaining.vue'
-import TokenGauge from './components/TokenGauge.vue'
-import TokenBreakdown from './components/TokenBreakdown.vue'
+// 儀表板版面：單一 useCcusage 資料源，五個展示元件以 props 接收
 import BurnRate from './components/BurnRate.vue'
 import Projection from './components/Projection.vue'
+import TimeRemaining from './components/TimeRemaining.vue'
+import TokenBreakdown from './components/TokenBreakdown.vue'
+import TokenGauge from './components/TokenGauge.vue'
 
-const { block, tokenLimit, error, loading, updatedAt, remainingMs, remainingRatio } =
-  useCcusage()
+import { useBurnRateHistory } from './composables/useBurnRateHistory'
+import { useCcusage } from './composables/useCcusage'
+
+const { block, tokenLimit, error, loading, updatedAt, remainingMs, remainingRatio } = useCcusage()
 const { samples } = useBurnRateHistory(block)
 </script>
 
@@ -39,15 +39,15 @@ const { samples } = useBurnRateHistory(block)
         </div>
 
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <TimeRemaining :remaining-ms="remainingMs" :remaining-ratio="remainingRatio" />
-          <TokenGauge :total-tokens="block.totalTokens" :limit="tokenLimit" />
-          <TokenBreakdown :token-counts="block.tokenCounts" />
-          <BurnRate :burn-rate="block.burnRate ?? null" :samples="samples" />
+          <TimeRemaining :remainingMs :remainingRatio />
+          <TokenGauge :totalTokens="block.totalTokens" :limit="tokenLimit" />
+          <TokenBreakdown :tokenCounts="block.tokenCounts" />
+          <BurnRate :burnRate="block.burnRate ?? null" :samples />
           <Projection :projection="block.projection ?? null" />
         </div>
       </template>
 
-      <div v-else class="text-base-content/70">目前沒有進行中的 block。</div>
+      <div v-else class="text-base-content/70">目前沒有進行中的 block</div>
     </div>
   </main>
 </template>
