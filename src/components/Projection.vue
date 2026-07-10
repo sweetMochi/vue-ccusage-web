@@ -11,7 +11,7 @@ defineProps<{
 
 <template>
   <!-- Projection - start -->
-  <div class="card bg-base-100 shadow-md">
+  <div class="card bg-base-100 shadow-md md:col-span-2">
     <div class="card-body gap-3">
       <h2 class="card-title text-sm font-medium text-base-content/70">預估用量</h2>
       <template v-if="projection">

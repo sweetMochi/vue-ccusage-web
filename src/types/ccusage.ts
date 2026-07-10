@@ -17,7 +17,7 @@ export interface CcusageTokenCounts {
 }
 
 /**
- * 每個 block 的消耗速率 (tokens 與費用)
+ * 每個 block 的消耗速率
  */
 export interface CcusageBurnRate {
   /** 每分鐘消耗 tokens (含 cache read) */
@@ -29,7 +29,7 @@ export interface CcusageBurnRate {
 }
 
 /**
- * 每個 block 的財務預測
+ * 每個 block 的花費預測
  */
 export interface CcusageProjection {
   /** 距 block 結束的分鐘數 */
@@ -41,7 +41,9 @@ export interface CcusageProjection {
 }
 
 /**
- * `npx ccusage blocks --json` 回傳的每個 block 結構
+ * ccusage 回傳的 block 結構
+ *
+ * `npx ccusage blocks --json`
  */
 export interface CcusageBlock {
   /** block 起點 (ISO 8601)，同 startTime */
@@ -71,7 +73,9 @@ export interface CcusageBlock {
 }
 
 /**
- * `npx ccusage blocks --json` 回傳的 JSON 結構
+ * ccusage 回傳的 JSON 結構
+ *
+ * `npx ccusage blocks --json`
  */
 export interface CcusageBlocksResponse {
   /** block 列表 */

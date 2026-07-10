@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Claude Code token 用量顯示面板 — 本地 Vue 儀表板,資料來源為 ccusage blocks",
+  "description": "Claude Code token 用量顯示面板 — 本地 Vue 儀表板，資料來源為 ccusage blocks",
   "author": "sweetmochi",
   "keywords": [
     "ai-assisted",

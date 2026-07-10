@@ -3,7 +3,7 @@
 import type { EChartsOption } from 'echarts'
 import { computed } from 'vue'
 import { useTheme } from '../composables/useTheme'
-import { darkTheme, lightTheme } from '../lib/chartTheme'
+import { darkTheme, lightTheme } from '../lib/theme'
 import { VChart } from '../lib/echarts'
 import { formatTokens } from '../lib/format'
 
@@ -65,12 +65,12 @@ const option = computed(() => {
 </script>
 
 <template>
-  <div class="card bg-base-100 shadow-md">
-    <div class="card-body gap-1">
+  <div class="card bg-base-100 shadow-md" :class="{ 'md:col-span-3': !totalTokens }">
+    <div class="card-body gap-1 min-h-80">
       <h2 class="card-title text-sm font-medium text-base-content/70">Token 用量</h2>
-      <VChart class="h-40 w-full" :option autoresize />
+      <VChart :option autoresize />
       <p class="text-center text-xs text-base-content/50">
-        {{ formatTokens(totalTokens) }} / {{ limit === null ? '—' : formatTokens(limit) }}(歷史最高
+        {{ formatTokens(totalTokens) }} / {{ limit === null ? '—' : formatTokens(limit) }} (歷史最高
         block)
       </p>
     </div>

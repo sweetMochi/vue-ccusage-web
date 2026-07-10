@@ -1,7 +1,5 @@
 import { computed, ref, watchEffect } from 'vue'
-
-/** 主題模式：跟隨系統 / 亮 / 暗 */
-export type ThemeMode = 'system' | 'light' | 'dark'
+import type { ThemeMode } from '../types/theme'
 
 const STORAGE_KEY = 'theme-mode'
 
@@ -10,8 +8,10 @@ function readStoredMode(): ThemeMode {
   return stored === 'light' || stored === 'dark' ? stored : 'system'
 }
 
-// 模組層級單例：daisyUI 的 data-theme 與 ECharts 配色共用同一份狀態，
-// 存活至頁面關閉，不需隨元件卸載清理
+// 主題是全頁面唯一的狀態 (模組層級單例)：data-theme、localStorage、ECharts
+// 切換主題時必須保持全部共用，故不宣告在函式內
+// matchMedia 的監聽器和 watchEffect 只需要註冊一次
+// 不需要隨某個元件卸載而清理，所以不用生命週期 hook
 const query = window.matchMedia('(prefers-color-scheme: dark)')
 const systemDark = ref(query.matches)
 query.addEventListener('change', (e) => (systemDark.value = e.matches))

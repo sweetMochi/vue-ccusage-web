@@ -1,5 +1,5 @@
 /**
- * 燃燒速率 (tokens/minute) 取樣資料
+ * 燃燒速率取樣資料
  */
 export interface BurnRateSample {
   /** 取樣時間 (毫秒) */

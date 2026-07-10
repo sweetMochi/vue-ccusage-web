@@ -16,12 +16,12 @@ const percent = computed(() => Math.round(props.remainingRatio * 100))
 <template>
   <!-- TimeRemaining - start -->
   <div class="card bg-base-100 shadow-md">
-    <div class="card-body items-center gap-3">
+    <div class="card-body items-center gap-3 min-h-80">
       <h2 class="card-title text-sm font-medium text-base-content/70">距離重置</h2>
       <div
         class="radial-progress text-primary"
         role="progressbar"
-        :style="{ '--value': percent, '--size': '10rem', '--thickness': '0.5rem' }"
+        :style="{ '--value': percent, '--size': '12.5rem', '--thickness': '0.5rem' }"
         :aria-valuenow="percent"
         aria-label="block 剩餘時間比例"
       >

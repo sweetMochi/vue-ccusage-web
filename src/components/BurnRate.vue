@@ -3,7 +3,7 @@
 import type { EChartsOption } from 'echarts'
 import { computed } from 'vue'
 import { useTheme } from '../composables/useTheme'
-import { darkTheme, lightTheme } from '../lib/chartTheme'
+import { darkTheme, lightTheme } from '../lib/theme'
 import { VChart } from '../lib/echarts'
 import { formatTokens, formatUsd } from '../lib/format'
 import type { CcusageBurnRate } from '../types/ccusage'

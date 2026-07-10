@@ -1,32 +1,25 @@
 <script setup lang="ts">
-// 儀表板版面：單一 useCcusage 資料源，五個展示元件以 props 接收
 import BurnRate from './components/BurnRate.vue'
 import Projection from './components/Projection.vue'
 import TimeRemaining from './components/TimeRemaining.vue'
 import TokenBreakdown from './components/TokenBreakdown.vue'
 import TokenGauge from './components/TokenGauge.vue'
-
 import { useBurnRateHistory } from './composables/useBurnRateHistory'
 import { useCcusage } from './composables/useCcusage'
-import { useTheme, type ThemeMode } from './composables/useTheme'
+import { useTheme } from './composables/useTheme'
+import { themeOptions } from './lib/theme'
 
 const { block, tokenLimit, error, loading, updatedAt, remainingMs, remainingRatio, refresh } =
   useCcusage()
 const { samples } = useBurnRateHistory(block)
 const { mode } = useTheme()
-
-const themeOptions: { value: ThemeMode; label: string }[] = [
-  { value: 'system', label: '系統' },
-  { value: 'light', label: '亮' },
-  { value: 'dark', label: '暗' },
-]
 </script>
 
 <template>
   <main class="min-h-screen bg-base-200 p-4 md:p-8">
     <div class="mx-auto max-w-5xl space-y-4">
       <header class="flex flex-wrap items-center justify-between gap-2">
-        <h1 class="text-xl font-bold">Claude Token 用量面板</h1>
+        <h1 class="text-xl font-bold">Claude Token Usage</h1>
         <div class="flex items-center gap-2">
           <p v-if="updatedAt" class="text-xs text-base-content/50">
             更新於 {{ updatedAt.toLocaleTimeString() }}
@@ -57,22 +50,25 @@ const themeOptions: { value: ThemeMode; label: string }[] = [
         <span>讀取失敗：{{ error }}</span>
       </div>
 
-      <template v-else-if="block">
+      <template v-else>
         <!-- 輪詢失敗時保留上次資料，只提示更新中斷 -->
         <div v-if="error" class="alert alert-warning text-sm">
           <span>更新失敗，顯示上次資料：{{ error }}</span>
         </div>
 
+        <!-- 沒有 active block 時仍顯示用量儀表 (0 / 歷史上限)，其餘卡片隱藏 -->
+        <div v-if="!block" class="alert alert-info text-sm">
+          <span>最近沒有使用 AI，如果有使用紀錄才能判斷剩餘用量</span>
+        </div>
+
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <TimeRemaining :remainingMs :remainingRatio />
-          <TokenGauge :totalTokens="block.totalTokens" :limit="tokenLimit" />
-          <TokenBreakdown :tokenCounts="block.tokenCounts" />
-          <BurnRate :burnRate="block.burnRate ?? null" :samples />
-          <Projection :projection="block.projection ?? null" />
+          <TimeRemaining v-if="block" :remainingMs :remainingRatio />
+          <TokenGauge :totalTokens="block?.totalTokens ?? 0" :limit="tokenLimit" />
+          <TokenBreakdown v-if="block" :tokenCounts="block.tokenCounts" />
+          <BurnRate v-if="block" :burnRate="block.burnRate ?? null" :samples />
+          <Projection v-if="block" :projection="block.projection ?? null" />
         </div>
       </template>
-
-      <div v-else class="text-base-content/70">目前沒有進行中的 block</div>
     </div>
   </main>
 </template>
