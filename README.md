@@ -131,7 +131,7 @@ npm run dev      # 啟動面板(含本地 API)
 > 已知限制:`/api/blocks` 只存在於 dev server,
 > `npm run preview` 或靜態部署無法取得資料。
 
-## 開發階段
+## 初始開發階段
 
 - [x] 專案大綱(README / package.json)
 - [x] Vite + Vue + Tailwind/daisyUI 腳手架
@@ -139,3 +139,42 @@ npm run dev      # 啟動面板(含本地 API)
 - [x] useCcusage composable 與型別定義
 - [x] 儀表板元件
 - [x] 主題與細節調整
+
+版面預覽：
+
+![開發階段版面預覽](docs/dev-stage-preview.svg)
+
+## 第一期開發：Weekly limits 卡牌規劃與卡牌 token 上限來源調整
+
+新增 Weekly 卡牌，導入 Claude Code statusline JSON 的官方 `rate_limits` 資料，
+並讓 5 小時卡牌的用量百分比改採官方數據（取代歷史最高估算）
+
+> `rate_limits` 僅 Pro / Max 訂閱者可用，含 `five_hour` / `seven_day` 兩視窗，
+> 各提供 `used_percentage`（0–100）與 `resets_at`（Unix epoch 秒），以上欄位有可能為空
+
+版面預覽：
+
+![Weekly limits 版面預覽](docs/weekly-limits-preview.svg)
+
+### 階段一：資料來源（兩張卡共用）
+
+- [ ] statusline dump script（`scripts/statusline.mjs`）：讀 stdin JSON 抽出 `rate_limits` 加時間戳寫入 `~/.claude/rate_limits.json`，保留原 statusline 文字輸出，於 `~/.claude/settings.json` 註冊
+- [ ] Vite middleware 新增 `GET /api/limits`：讀 dump 檔回傳 JSON 附檔案 mtime；檔案不存在時回傳空狀態而非 500
+- [ ] 型別定義 `src/types/statusline.ts`：`RateLimitWindow { used_percentage, resets_at }`，`five_hour` / `seven_day` 可能回傳空值
+- [ ] `useRateLimits` composable：每 30 秒輪詢，衍生各視窗百分比、重置倒數、資料過期判斷（mtime 過久標示「Claude Code 未在執行」）
+
+### 階段二：Weekly 卡
+
+- [ ] TokenGauge 參數化：新增 `title`、`limitLabel` props 與「直接傳百分比」模式，預設值維持現行為
+- [ ] App.vue 新增 Weekly 卡：`seven_day.used_percentage` 儀表 + `resets_at` 重置時間；無資料時顯示 statusline 設定提示；不依賴 active block
+
+### 階段三：5 小時卡改用官方百分比
+
+- [ ] 儀表百分比改用 `five_hour.used_percentage`，ccusage 的 `totalTokens` 降為註腳補充資訊
+- [ ] fallback：官方資料缺席或過期時退回「totalTokens / 歷史最高」估算，註腳標明目前資料來源
+- [ ] `tokenLimit` 僅保留作 fallback 分母，確認註腳文案能區分官方值與估算值
+
+### 階段四：撰寫文件與驗證
+
+- [ ] README 資料流圖補上 statusline → dump 檔 → `/api/limits` 路徑與設定步驟
+- [ ] `npm run build` 型別檢查；手動驗證三情境：無 dump 檔（首次）、資料齊全、mtime 過期（Claude Code 未執行）
