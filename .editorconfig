@@ -9,6 +9,6 @@ indent_size = 2
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-# Markdown 的行尾雙空格是有意義的換行,不修剪
+# Markdown 的行尾雙空格是有意義的換行，不修剪
 [*.md]
 trim_trailing_whitespace = false
