@@ -1,6 +1,3 @@
-// Claude Code statusline JSON 的 rate_limits 型別定義
-// 欄位對照 README「Weekly limits 卡牌規劃」一節
-
 /**
  * 單一限額視窗 (five_hour / seven_day)
  */

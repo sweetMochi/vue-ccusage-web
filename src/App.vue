@@ -6,12 +6,15 @@ import TokenBreakdown from './components/TokenBreakdown.vue'
 import TokenGauge from './components/TokenGauge.vue'
 import { useBurnRateHistory } from './composables/useBurnRateHistory'
 import { useCcusage } from './composables/useCcusage'
+import { useRateLimits } from './composables/useRateLimits'
 import { useTheme } from './composables/useTheme'
+import { formatResetAt } from './lib/format'
 import { themeOptions } from './lib/theme'
 
 const { block, tokenLimit, error, loading, updatedAt, remainingMs, remainingRatio, refresh } =
   useCcusage()
 const { samples } = useBurnRateHistory(block)
+const { sevenDay, isStale } = useRateLimits()
 const { mode } = useTheme()
 </script>
 
@@ -64,6 +67,17 @@ const { mode } = useTheme()
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <TimeRemaining v-if="block" :remainingMs :remainingRatio />
           <TokenGauge :totalTokens="block?.totalTokens ?? 0" :limit="tokenLimit" />
+          <!-- Weekly 卡牌：statusline 官方 7 日限額，不依賴 active block -->
+          <TokenGauge title="本週用量" :percent="sevenDay?.used_percentage ?? null">
+            <template #footnote>
+              <template v-if="sevenDay">
+                重置於 {{ formatResetAt(sevenDay.resets_at) }}（官方 7 日限額）{{
+                  isStale ? '・Claude Code 未在執行，顯示上次資料' : ''
+                }}
+              </template>
+              <template v-else>無官方資料：請確認已依 README 設定 statusline dump script</template>
+            </template>
+          </TokenGauge>
           <TokenBreakdown v-if="block" :tokenCounts="block.tokenCounts" />
           <BurnRate v-if="block" :burnRate="block.burnRate ?? null" :samples />
           <Projection v-if="block" :projection="block.projection ?? null" />

@@ -3,28 +3,29 @@
 import type { EChartsOption } from 'echarts'
 import { computed } from 'vue'
 import { useTheme } from '../composables/useTheme'
-import { darkTheme, lightTheme } from '../lib/theme'
 import { VChart } from '../lib/echarts'
 import { formatTokens } from '../lib/format'
+import { darkTheme, lightTheme } from '../lib/theme'
+import type { TokenGauge } from '../types/components'
 
-const props = defineProps<{
-  /** 相對歷史最高 block 的比例 */
-  totalTokens: number
-  /**
-   * 用量上限
-   *
-   *      number: 歷史最高 block
-   *      null: 表示尚無足夠資料
-   */
-  limit: number | null
-}>()
+const props = withDefaults(defineProps<TokenGauge>(), {
+  title: 'Token 用量',
+  percent: undefined,
+  totalTokens: 0,
+  limit: null,
+  limitLabel: '歷史最高 block',
+})
 
 const { isDark } = useTheme()
 const theme = computed(() => (isDark.value ? darkTheme : lightTheme))
 
-const percent = computed(() =>
-  props.limit ? Math.min(100, (props.totalTokens / props.limit) * 100) : 0
-)
+/** 儀表顯示的百分比；null 表示無資料 */
+const displayPercent = computed<number | null>(() => {
+  if (props.percent !== undefined) {
+    return props.percent === null ? null : Math.min(100, props.percent)
+  }
+  return props.limit ? Math.min(100, (props.totalTokens / props.limit) * 100) : 0
+})
 
 const option = computed(() => {
   return {
@@ -51,13 +52,13 @@ const option = computed(() => {
         pointer: { show: false },
         detail: {
           valueAnimation: true,
-          formatter: (v: number) => `${Math.round(v)}%`,
+          formatter: (v: number) => (displayPercent.value === null ? '—' : `${Math.round(v)}%`),
           color: theme.value.ink,
           fontSize: 26,
           fontWeight: 600,
           offsetCenter: [0, '-15%'],
         },
-        data: [{ value: percent.value }],
+        data: [{ value: displayPercent.value ?? 0 }],
       },
     ],
   } as EChartsOption
@@ -65,13 +66,20 @@ const option = computed(() => {
 </script>
 
 <template>
-  <div class="card bg-base-100 shadow-md" :class="{ 'md:col-span-3': !totalTokens }">
+  <!-- 換算模式且無用量時放大佔滿一列 (percent 模式的無資料狀態不適用) -->
+  <div
+    class="card bg-base-100 shadow-md"
+    :class="{ 'md:col-span-3': percent === undefined && !totalTokens }"
+  >
     <div class="card-body gap-1 min-h-80">
-      <h2 class="card-title text-sm font-medium text-base-content/70">Token 用量</h2>
+      <h2 class="card-title text-sm font-medium text-base-content/70">{{ title }}</h2>
       <VChart :option autoresize />
       <p class="text-center text-xs text-base-content/50">
-        {{ formatTokens(totalTokens) }} / {{ limit === null ? '—' : formatTokens(limit) }} (歷史最高
-        block)
+        <slot name="footnote">
+          {{ formatTokens(totalTokens) }} / {{ limit === null ? '—' : formatTokens(limit) }}（{{
+            limitLabel
+          }}）
+        </slot>
       </p>
     </div>
   </div>
