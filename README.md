@@ -36,13 +36,14 @@ Git 記錄中由 AI 參與的 commit 皆帶有 `Co-Authored-By: Claude` 署名�
 
 ## 技術架構
 
-| 層       | 技術                                  | 說明                                                           |
-| -------- | ------------------------------------- | -------------------------------------------------------------- |
-| 前端框架 | Vue 3 (`<script setup>` + TypeScript) | SPA，單頁儀表板                                                |
-| 建置工具 | Vite                                  | dev server 同時擔任本地 API                                    |
-| 樣式     | Tailwind CSS 4 + daisyUI 5            | stat / progress / radial-progress 元件                         |
-| 圖表     | vue-echarts (ECharts)                 | gauge、pie、sparkline                                          |
-| 資料來源 | `npx ccusage blocks --json`           | 由 Vite middleware 在 Node 端執行(全部 blocks，供歷史上限計算) |
+| 層       | 技術                                  | 說明                                                            |
+| -------- | ------------------------------------- | --------------------------------------------------------------- |
+| 前端框架 | Vue 3 (`<script setup>` + TypeScript) | SPA，單頁儀表板                                                 |
+| 建置工具 | Vite                                  | dev server 同時擔任本地 API                                     |
+| 樣式     | Tailwind CSS 4 + daisyUI 5            | stat / progress / radial-progress 元件                          |
+| 圖表     | vue-echarts (ECharts)                 | gauge、pie、sparkline                                           |
+| 資料來源 | `npx ccusage blocks --json`           | 由 Vite middleware 在 Node 端執行(全部 blocks，供估算 fallback) |
+| 官方限額 | Claude Code statusline `rate_limits`  | `scripts/statusline.mjs` dump 至 `~/.claude/rate_limits.json`   |
 
 ### 資料流
 
@@ -63,29 +64,58 @@ Vue composable useCcusage()
 > `/api/blocks` endpoint，於 Node 端執行 `ccusage` 並回傳 JSON。
 > 本專案定位為「本地開發工具」，以 `npm run dev` 啟動即可使用。
 
+官方 `rate_limits`（Weekly 卡牌與 5 小時卡牌官方百分比）另走一條資料流：
+
+```
+Claude Code statusline(每次狀態列更新觸發)
+        │  scripts/statusline.mjs(dump 後串接原 statusline 指令，顯示不變)
+        ▼
+~/.claude/rate_limits.json
+        │  讀檔 + 檔案 mtime(判斷資料新鮮度)
+        ▼
+Vite dev server middleware   GET /api/limits
+        │  fetch(每 30 秒輪詢)
+        ▼
+Vue composable useRateLimits()
+        │  reactive state(fiveHour / sevenDay / isStale)
+        ▼
+5 小時卡牌(官方百分比優先) / Weekly 卡牌
+```
+
+> statusline 與儀表板是兩個獨立行程，以 dump 檔為交換介質：
+> Claude Code 未執行時面板讀舊檔並以 mtime 標示過期，
+> 官方資料為空值或過期時 5 小時卡牌退回歷史最高估算。
+
 ## 專案結構(規劃)
 
 ```
 vue-ccusage-web/
-├── vite.config.ts            # Vite 設定 + ccusage API middleware 插件
+├── vite.config.ts            # Vite 設定 + /api/blocks、/api/limits middleware 插件
 ├── index.html
+├── scripts/
+│   ├── statusline.mjs        # statusline 包裝腳本(dump rate_limits 後串接原指令)
+│   └── dev-with-claude.mjs   # dev server + 另開 Claude 視窗觸發 statusline
 ├── src/
 │   ├── main.ts
-│   ├── App.vue               # 版面配置(grid 儀表板)
+│   ├── App.vue               # 版面配置(grid 儀表板)、卡牌資料來源切換
 │   ├── style.css             # Tailwind / daisyUI 進入點
 │   ├── types/
-│   │   └── ccusage.ts        # blocks JSON 的 TypeScript 型別
+│   │   ├── ccusage.ts        # blocks JSON 的 TypeScript 型別
+│   │   ├── statusline.ts     # statusline rate_limits 與 /api/limits 型別
+│   │   ├── components.ts     # 元件 props 型別
+│   │   └── theme.ts          # 主題型別
 │   ├── lib/
 │   │   ├── echarts.ts        # ECharts 按需註冊
-│   │   ├── chartTheme.ts     # 圖表配色(明/暗，經 CVD 驗證)
+│   │   ├── theme.ts          # 圖表配色(明/暗，經 CVD 驗證)與主題選項
 │   │   └── format.ts         # 數字 / 時間格式化
 │   ├── composables/
 │   │   ├── useCcusage.ts     # 輪詢 /api/blocks、衍生值計算
+│   │   ├── useRateLimits.ts  # 輪詢 /api/limits、官方限額衍生值與過期判斷
 │   │   ├── useBurnRateHistory.ts # burnRate 取樣累積(趨勢線)
 │   │   └── useTheme.ts       # 三態主題(跟隨系統/亮/暗)單一真相來源
 │   └── components/
 │       ├── TimeRemaining.vue # 剩餘時間圓環
-│       ├── TokenGauge.vue    # token 用量儀表
+│       ├── TokenGauge.vue    # token 用量儀表(換算 / 直接百分比雙模式)
 │       ├── BurnRate.vue      # 燃燒速率統計卡
 │       ├── Projection.vue    # 預估用量統計卡
 │       └── TokenBreakdown.vue# token 組成圓餅圖
@@ -117,19 +147,43 @@ vue-ccusage-web/
 }
 ```
 
-> 注意：ccusage 是由本機記錄推算，**沒有官方「剩餘額度」數字**
+> 注意：ccusage 是由本機記錄推算，**沒有官方「剩餘額度」數字**；
+> 官方百分比由 statusline `rate_limits` 資料流補足（見上方資料流）
 
-> 百分比上限採 `--token-limit max` (歷史最高 block)
+> 估算 fallback 的百分比上限採 `--token-limit max` (歷史最高 block)
 
 ## 使用方式
 
 ```bash
 npm install
-npm run dev      # 啟動面板(含本地 API)
+npm run dev              # 啟動面板(含本地 API)
+npm run dev:with-claude  # 啟動面板 + 另開 Claude Code 視窗觸發 statusline 更新
 ```
 
-> 已知限制：`/api/blocks` 只存在於 dev server，
+> `dev:with-claude` 會以最低成本組合（haiku + `MAX_THINKING_TOKENS=0` + 一則 "Say ok"）
+> 另開互動 session；視窗保持開啟期間官方 `rate_limits` 持續更新（僅支援 Windows）
+
+> 已知限制：`/api/blocks` 與 `/api/limits` 只存在於 dev server，
 > `npm run preview` 或靜態部署無法取得資料。
+
+### 啟用官方 rate_limits（Weekly 卡牌與 5 小時官方百分比）
+
+1. 於 `~/.claude/settings.json` 將 statusline 指令指向本專案的包裝腳本（路徑改為你的專案位置）：
+
+   ```json
+   "statusLine": {
+     "type": "command",
+     "command": "node \"<專案絕對路徑>/scripts/statusline.mjs\""
+   }
+   ```
+
+2. 原本使用的 statusline 指令改填在 `scripts/statusline.mjs` 開頭的 `INNER_COMMAND`
+   （預設為 `npx -y ccstatusline@latest`），dump 完成後會原樣串接執行，顯示內容不變
+3. 開新的 Claude Code session 後，statusline 每次更新都會把官方 `rate_limits`
+   寫入 `~/.claude/rate_limits.json`，面板即自動採用官方百分比
+
+> `rate_limits` 僅 Pro / Max 訂閱者可用；未完成設定或欄位為空值時，
+> Weekly 卡牌顯示無資料提示，5 小時卡牌退回歷史最高估算
 
 ## 初始開發階段
 
@@ -170,11 +224,11 @@ npm run dev      # 啟動面板(含本地 API)
 
 ### 階段三：修改 5 小時上限改用官方回傳數據
 
-- [ ] 儀表百分比改用 `five_hour.used_percentage`，ccusage 的 `totalTokens` 降為註腳補充資訊
-- [ ] fallback：官方資料為空值或過期時退回「totalTokens / 歷史最高」估算，註腳標明目前資料來源
-- [ ] `tokenLimit` 僅保留作 fallback 分母，確認註腳文案能區分官方值與估算值
+- [x] 儀表百分比改用 `five_hour.used_percentage`，ccusage 的 `totalTokens` 降為註腳補充資訊
+- [x] fallback：官方資料為空值或過期時退回「totalTokens / 歷史最高」估算，註腳標明目前資料來源
+- [x] `tokenLimit` 僅保留作 fallback 分母，註腳文案以「官方 5 小時限額」/「歷史最高 block 估算」區分資料來源
 
 ### 階段四：撰寫文件與驗證
 
-- [ ] README 資料流圖補上 statusline → dump 檔 → `/api/limits` 路徑與設定步驟
-- [ ] `npm run build` 型別檢查；手動驗證三情境：無 dump 檔（首次）、資料齊全、mtime 過期（Claude Code 未執行）
+- [x] README 資料流圖補上 statusline → dump 檔 → `/api/limits` 路徑與設定步驟（另更新技術架構表、專案結構、ccusage 註記）
+- [x] `npm run build` 型別檢查；手動驗證三情境：無 dump 檔（首次）、資料齊全、mtime 過期（Claude Code 未執行）

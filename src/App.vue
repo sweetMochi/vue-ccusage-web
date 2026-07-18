@@ -4,18 +4,22 @@ import Projection from './components/Projection.vue'
 import TimeRemaining from './components/TimeRemaining.vue'
 import TokenBreakdown from './components/TokenBreakdown.vue'
 import TokenGauge from './components/TokenGauge.vue'
+import { computed } from 'vue'
 import { useBurnRateHistory } from './composables/useBurnRateHistory'
 import { useCcusage } from './composables/useCcusage'
 import { useRateLimits } from './composables/useRateLimits'
 import { useTheme } from './composables/useTheme'
-import { formatResetAt } from './lib/format'
+import { formatResetAt, formatTokens } from './lib/format'
 import { themeOptions } from './lib/theme'
 
 const { block, tokenLimit, error, loading, updatedAt, remainingMs, remainingRatio, refresh } =
   useCcusage()
 const { samples } = useBurnRateHistory(block)
-const { sevenDay, isStale } = useRateLimits()
+const { fiveHour, sevenDay, isStale } = useRateLimits()
 const { mode } = useTheme()
+
+/** 5 小時卡優先採官方百分比；官方資料為空值或過期時退回歷史最高估算 */
+const fiveHourOfficial = computed(() => (!isStale.value && fiveHour.value ? fiveHour.value : null))
 </script>
 
 <template>
@@ -59,21 +63,36 @@ const { mode } = useTheme()
           <span>更新失敗，顯示上次資料：{{ error }}</span>
         </div>
 
-        <!-- 沒有 active block 時仍顯示用量儀表 (0 / 歷史上限)，其餘卡片隱藏 -->
+        <!-- 沒有 active block 時仍顯示用量儀表 (0 / max)，其餘卡片隱藏 -->
         <div v-if="!block" class="alert alert-info text-sm">
           <span>最近沒有使用 AI，如果有使用紀錄才能判斷剩餘用量</span>
         </div>
 
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <TimeRemaining v-if="block" :remainingMs :remainingRatio />
-          <TokenGauge :totalTokens="block?.totalTokens ?? 0" :limit="tokenLimit" />
-          <!-- Weekly 卡牌：statusline 官方 7 日限額，不依賴 active block -->
+          <!-- 5 小時卡牌：statusline 官方 5 小時限額，為空值或過期時退回歷史最高估算 -->
+          <TokenGauge
+            :percent="fiveHourOfficial?.used_percentage"
+            :totalTokens="block?.totalTokens ?? 0"
+            :limit="tokenLimit"
+          >
+            <template #footnote>
+              <template v-if="fiveHourOfficial">
+                {{ formatTokens(block?.totalTokens ?? 0) }} tokens・重置於
+                {{ formatResetAt(fiveHourOfficial.resets_at) }}
+              </template>
+              <template v-else>
+                {{ formatTokens(block?.totalTokens ?? 0) }} /
+                {{ tokenLimit === null ? '—' : formatTokens(tokenLimit) }}（歷史最高 block 估算）
+              </template>
+            </template>
+          </TokenGauge>
+          <!-- 每週卡牌：statusline 官方每週限額，不依賴 active block -->
           <TokenGauge title="本週用量" :percent="sevenDay?.used_percentage ?? null">
             <template #footnote>
               <template v-if="sevenDay">
-                重置於 {{ formatResetAt(sevenDay.resets_at) }}（官方 7 日限額）{{
-                  isStale ? '・Claude Code 未在執行，顯示上次資料' : ''
-                }}
+                重置於 {{ formatResetAt(sevenDay.resets_at)
+                }}{{ isStale ? '（Claude Code CLI 未在執行，顯示上次資料）' : '' }}
               </template>
               <template v-else>無官方資料：請確認已依 README 設定 statusline dump script</template>
             </template>

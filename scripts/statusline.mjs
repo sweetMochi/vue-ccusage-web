@@ -8,6 +8,7 @@
 //   "statusLine": { "type": "command", "command": "node \"<本檔絕對路徑>\"" }
 
 import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -30,12 +31,15 @@ try {
 }
 
 // rate_limits 僅 Pro/Max 且 session 有 API 回應後才有
-// 欄位為空值時也寫入 null，讓面板能區分「statusline 有在執行但沒資料」與「從未設定」
+// 為空值時不覆寫既有檔案，避免 session 剛啟動(首次 API 回應前)洗掉先前的有效資料；
+// 檔案不存在時仍寫入 null，讓面板能區分「statusline 有在執行但沒資料」與「從未設定」
+const dumpPath = join(homedir(), '.claude', 'rate_limits.json')
 try {
-  await writeFile(
-    join(homedir(), '.claude', 'rate_limits.json'),
-    JSON.stringify({ rate_limits: data.rate_limits ?? null })
-  )
+  if (data.rate_limits != null) {
+    await writeFile(dumpPath, JSON.stringify({ rate_limits: data.rate_limits }))
+  } else if (!existsSync(dumpPath)) {
+    await writeFile(dumpPath, JSON.stringify({ rate_limits: null }))
+  }
 } catch {
   // dump 失敗不能影響 statusline 顯示
 }

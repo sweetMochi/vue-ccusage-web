@@ -16,6 +16,7 @@
   ],
   "scripts": {
     "dev": "vite",
+    "dev:with-claude": "node scripts/dev-with-claude.mjs",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "format": "prettier --write .",
