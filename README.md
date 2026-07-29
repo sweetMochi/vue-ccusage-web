@@ -24,6 +24,8 @@ Claude Code Token 用量顯示面板 — 本地執行的 Vue 應用程式，
 Git 記錄中由 AI 參與的 commit 皆帶有 `Co-Authored-By: Claude` 署名，
 可與人類手動修改的 commit 區分。
 
+各版本的變更內容與版本號規則見 [CHANGELOG.md](CHANGELOG.md)
+
 ## 功能規劃
 
 - **剩餘時間圓環**：目前 block 距離重置 `endTime` 的倒數，daisyUI `radial-progress`
