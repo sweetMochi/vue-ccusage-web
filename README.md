@@ -29,7 +29,6 @@ Git 記錄中由 AI 參與的 commit 皆帶有 `Co-Authored-By: Claude` 署名�
 - **剩餘時間圓環**：目前 block 距離重置 `endTime` 的倒數，daisyUI `radial-progress`
 - **Token 用量儀表**：`totalTokens` 與自訂 / 歷史上限 (`--token-limit max`) 的比例，vue-echarts gauge
 - **燃燒速率 (Burn Rate)**：`tokensPerMinute`、`costPerHour` 即時數值 + 迷你趨勢線
-- **預估用量 (Projection)**：block 結束時的預估 token 總量與費用
 - **Token 組成分布**：input / output / cache read / cache creation 圓餅圖
 - **自動輪詢**：每 30 秒重新取得資料，倒數歸零時立即更新，另有手動重新整理鈕
 - **主題切換**：跟隨系統 / 亮 / 暗三態，選擇記錄於 localStorage，圖表配色同步切換
@@ -117,7 +116,6 @@ vue-ccusage-web/
 │       ├── TimeRemaining.vue # 剩餘時間圓環
 │       ├── TokenGauge.vue    # token 用量儀表(換算 / 直接百分比雙模式)
 │       ├── BurnRate.vue      # 燃燒速率統計卡
-│       ├── Projection.vue    # 預估用量統計卡
 │       └── TokenBreakdown.vue# token 組成圓餅圖
 └── README.md
 ```

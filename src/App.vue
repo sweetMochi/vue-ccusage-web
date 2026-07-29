@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import BurnRate from './components/BurnRate.vue'
-import Projection from './components/Projection.vue'
 import TimeRemaining from './components/TimeRemaining.vue'
 import TokenBreakdown from './components/TokenBreakdown.vue'
 import TokenGauge from './components/TokenGauge.vue'
@@ -99,7 +98,6 @@ const fiveHourOfficial = computed(() => (!isStale.value && fiveHour.value ? five
           </TokenGauge>
           <TokenBreakdown v-if="block" :tokenCounts="block.tokenCounts" />
           <BurnRate v-if="block" :burnRate="block.burnRate ?? null" :samples />
-          <Projection v-if="block" :projection="block.projection ?? null" />
         </div>
       </template>
     </div>
