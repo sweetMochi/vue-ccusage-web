@@ -14,6 +14,45 @@
 
 純規劃或文件的 commit 不單獨發版，併入實作完成的該版本。
 
+## [1.3.0] - 2026-08-04
+
+第二期開發：把「Claude Code 是否還在執行」與「官方數值是否還新鮮」拆成兩件事判斷，
+並讓 ↻ 在數值過期時能主動開一個隱藏 session 逼 statusline 重寫
+
+> statusline 只由互動式 TUI 觸發，閒置期間不會重繪，
+> 因此舊版單看 dump 檔 mtime 會把閒置中的 session 誤判為未執行
+
+### 新增
+
+- `scripts/refresh-limits.mjs` 與 `POST /api/refresh-limits`：以 PowerShell
+  `Start-Process -WindowStyle Hidden` 開一個 `claude --model haiku` session 逼 statusline
+  重寫官方數值，偵測 `captured_at` 變動後 (實測約 3 秒) 以 `taskkill /T` 收掉行程樹；
+  同時只保留一次觸發，僅支援 Windows，其他平台回傳 `unsupported`
+- `npm run refresh-limits`：不透過面板直接觸發更新
+- dump 檔新增 `captured_at` 欄位並由 `/api/limits` 一併回傳，
+  舊版格式以覆寫前的 mtime 補上，面板無需等待即可判斷新鮮度
+- `LimitStatus` 四態 (`ok` / `aging` / `expired` / `missing`)：各限額視窗獨立判斷，
+  `expired` 優先於 `aging` (已過 `resets_at` 的百分比一定失效)
+- `docs/dashboard-preview.svg`：反映現行版面的預覽圖
+
+### 變更
+
+- statusline dump 改為每次執行都重寫檔案：`rate_limits` 為空值時保留既有數值但推進 mtime，
+  檔案 mtime 自此代表 statusline 心跳、`captured_at` 代表數值擷取時間
+- ↻ 改為先重抓 `/api/blocks` 與 `/api/limits`，官方數值仍為 `aging` 或 `expired`
+  時才觸發 session (會消耗正在被測量的 5 小時配額)，觸發中顯示 spinner 並停用按鈕
+- `aging` 的註腳依 mtime 區分「Claude Code 未在執行或閒置中」與「官方尚未回報新數值」
+- 卡牌標題：燃燒速率改為用量趨勢、距離重置改為重置時間、5 小時卡加上「當前用量」
+- 中文全形括號（）統一改為半形 () 並補上空白，
+  `formatResetAt` 輸出同步改為「MM/DD (週) HH:mm」
+- README 補上四態表格、手動重新整理流程與各觸發做法的比較，
+  開發階段紀錄移入本檔僅保留連結
+
+### 移除
+
+- `useRateLimits` 的 `isStale`：由 `isStatuslineIdle`、`isDataAging`
+  與各視窗的 `LimitStatus` 取代
+
 ## [1.2.0] - 2026-07-29
 
 ### 移除
@@ -132,6 +171,7 @@
 - 輪詢失敗時保留上次資料，僅顯示更新中斷警示
 - vite dev server 啟動時自動開啟瀏覽器
 
+[1.3.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.0.0...v1.0.1
