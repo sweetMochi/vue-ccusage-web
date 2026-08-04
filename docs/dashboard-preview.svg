@@ -9,7 +9,7 @@
   <rect width="1180" height="860" fill="#f4f3ee"/>
 
   <!-- 預覽說明 -->
-  <text x="30" y="34" font-size="13" fill="#52514e">Weekly limits 規劃 — 儀表板版面預覽 (亮色主題)</text>
+  <text x="30" y="34" font-size="13" fill="#52514e">儀表板版面預覽 (亮色主題)</text>
 
   <!-- 頁首 -->
   <text x="30" y="92" font-size="20" font-weight="700" fill="#0b0b0b">Claude Token Usage</text>
@@ -35,12 +35,10 @@
     <text x="210" y="420" font-size="11" fill="#52514e" text-anchor="middle">block 剩餘 56%</text>
   </g>
 
-  <!-- ─── 卡片二：Token 用量(5 小時) — 改用官方百分比 ─── -->
+  <!-- ─── 卡片二：Token 用量(5 小時) ─── -->
   <g>
     <rect x="410" y="120" width="360" height="330" rx="16" fill="#fcfcfb" filter="url(#cardShadow)"/>
     <text x="434" y="156" font-size="13" font-weight="500" fill="#52514e">Token 用量 (5 小時)</text>
-    <rect x="694" y="134" width="52" height="22" rx="11" fill="#f1efe8"/>
-    <text x="720" y="149" font-size="11" fill="#52514e" text-anchor="middle">調整</text>
     <!-- gauge 軌道 210° → -30° -->
     <path d="M 516.4 332.5 A 85 85 0 1 1 663.6 332.5" fill="none" stroke="#e1e0d9" stroke-width="10" stroke-linecap="round"/>
     <!-- 進度 24% -->
@@ -50,12 +48,10 @@
     <text x="590" y="420" font-size="11" fill="#52514e" text-anchor="middle">官方 5 小時限額 (statusline)・無資料時退回歷史最高估算</text>
   </g>
 
-  <!-- ─── 卡片三：本週用量(Weekly) — 新增 ─── -->
+  <!-- ─── 卡片三：本週用量(Weekly) ─── -->
   <g>
     <rect x="790" y="120" width="360" height="330" rx="16" fill="#fcfcfb" filter="url(#cardShadow)"/>
     <text x="814" y="156" font-size="13" font-weight="500" fill="#52514e">本週用量</text>
-    <rect x="1074" y="134" width="52" height="22" rx="11" fill="#e7f0fb"/>
-    <text x="1100" y="149" font-size="11" fill="#1d5aa8" text-anchor="middle">新增</text>
     <path d="M 896.4 332.5 A 85 85 0 1 1 1043.6 332.5" fill="none" stroke="#e1e0d9" stroke-width="10" stroke-linecap="round"/>
     <!-- 進度 41% -->
     <path d="M 896.4 332.5 A 85 85 0 0 1 938.7 211.0" fill="none" stroke="#2a78d6" stroke-width="10" stroke-linecap="round"/>
@@ -86,35 +82,19 @@
     </g>
   </g>
 
-  <!-- ─── 卡片五：燃燒速率 ─── -->
+  <!-- ─── 卡片五：燃燒速率 (橫跨兩欄) ─── -->
   <g>
-    <rect x="410" y="470" width="360" height="330" rx="16" fill="#fcfcfb" filter="url(#cardShadow)"/>
+    <rect x="410" y="470" width="740" height="330" rx="16" fill="#fcfcfb" filter="url(#cardShadow)"/>
     <text x="434" y="506" font-size="13" font-weight="500" fill="#52514e">燃燒速率</text>
     <text x="434" y="560" font-size="24" font-weight="600" fill="#0b0b0b">24.5K</text>
     <text x="434" y="580" font-size="11" fill="#52514e">tokens / 分</text>
     <text x="610" y="560" font-size="24" font-weight="600" fill="#0b0b0b">$0.83</text>
     <text x="610" y="580" font-size="11" fill="#52514e">費用 / 小時</text>
     <!-- 迷你趨勢線 -->
-    <polyline points="434,742 470,730 506,736 542,714 578,722 614,700 650,706 686,688 722,694 746,678"
+    <polyline points="434,742 511,730 588,736 665,714 742,722 819,700 896,706 973,688 1050,694 1126,678"
               fill="none" stroke="#2a78d6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M434,742 L470,730 L506,736 L542,714 L578,722 L614,700 L650,706 L686,688 L722,694 L746,678 L746,764 L434,764 Z"
+    <path d="M434,742 L511,730 L588,736 L665,714 L742,722 L819,700 L896,706 L973,688 L1050,694 L1126,678 L1126,764 L434,764 Z"
           fill="#2a78d6" fill-opacity="0.08" stroke="none"/>
     <text x="434" y="782" font-size="10" fill="#8a8983">近 30 分鐘取樣</text>
-  </g>
-
-  <!-- ─── 卡片六：預估用量 ─── -->
-  <g>
-    <rect x="790" y="470" width="360" height="330" rx="16" fill="#fcfcfb" filter="url(#cardShadow)"/>
-    <text x="814" y="506" font-size="13" font-weight="500" fill="#52514e">預估用量</text>
-    <g font-size="13">
-      <text x="814" y="570" fill="#52514e">預估總 tokens</text>
-      <text x="1126" y="570" fill="#0b0b0b" font-weight="600" text-anchor="end">6.86M</text>
-      <line x1="814" y1="592" x2="1126" y2="592" stroke="#e1e0d9"/>
-      <text x="814" y="630" fill="#52514e">預估總費用</text>
-      <text x="1126" y="630" fill="#0b0b0b" font-weight="600" text-anchor="end">$3.87</text>
-      <line x1="814" y1="652" x2="1126" y2="652" stroke="#e1e0d9"/>
-      <text x="814" y="690" fill="#52514e">距 block 結束</text>
-      <text x="1126" y="690" fill="#0b0b0b" font-weight="600" text-anchor="end">258 分</text>
-    </g>
   </g>
 </svg>

@@ -9,7 +9,6 @@ import { darkTheme, lightTheme } from '../lib/theme'
 import type { TokenGauge } from '../types/components'
 
 const props = withDefaults(defineProps<TokenGauge>(), {
-  title: 'Token 用量',
   percent: undefined,
   totalTokens: 0,
   limit: null,
@@ -76,9 +75,9 @@ const option = computed(() => {
       <VChart :option autoresize />
       <p class="text-center text-xs text-base-content/50">
         <slot name="footnote">
-          {{ formatTokens(totalTokens) }} / {{ limit === null ? '—' : formatTokens(limit) }}（{{
+          {{ formatTokens(totalTokens) }} / {{ limit === null ? '—' : formatTokens(limit) }} ({{
             limitLabel
-          }}）
+          }})
         </slot>
       </p>
     </div>

@@ -9,7 +9,7 @@
   <rect width="1180" height="860" fill="#f4f3ee"/>
 
   <!-- 預覽說明 -->
-  <text x="30" y="34" font-size="13" fill="#52514e">開發階段 — 目前儀表板版面預覽（亮色主題，資料為 README 範例值）</text>
+  <text x="30" y="34" font-size="13" fill="#52514e">開發階段 — 目前儀表板版面預覽 (亮色主題，資料為 README 範例值)</text>
 
   <!-- 頁首 -->
   <text x="30" y="92" font-size="20" font-weight="700" fill="#0b0b0b">Claude Token Usage</text>
@@ -44,7 +44,7 @@
     <!-- 進度 7% -->
     <path d="M 516.4 332.5 A 85 85 0 0 1 507.2 309.4" fill="none" stroke="#2a78d6" stroke-width="10" stroke-linecap="round"/>
     <text x="590" y="288" font-size="26" font-weight="600" fill="#0b0b0b" text-anchor="middle">7%</text>
-    <text x="590" y="420" font-size="11" fill="#52514e" text-anchor="middle">532.5K / 7.2M（歷史最高 block）</text>
+    <text x="590" y="420" font-size="11" fill="#52514e" text-anchor="middle">532.5K / 7.2M (歷史最高 block)</text>
   </g>
 
   <!-- ─── 卡片三：Token 組成 ─── -->

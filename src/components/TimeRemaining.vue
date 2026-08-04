@@ -17,7 +17,7 @@ const percent = computed(() => Math.round(props.remainingRatio * 100))
   <!-- TimeRemaining - start -->
   <div class="card bg-base-100 shadow-md">
     <div class="card-body items-center gap-3 min-h-80">
-      <h2 class="card-title text-sm font-medium text-base-content/70">距離重置</h2>
+      <h2 class="card-title text-sm font-medium text-base-content/70">重置時間</h2>
       <div
         class="radial-progress text-primary"
         role="progressbar"

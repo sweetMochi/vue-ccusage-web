@@ -8,8 +8,7 @@
 //   "statusLine": { "type": "command", "command": "node \"<本檔絕對路徑>\"" }
 
 import { spawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
-import { writeFile } from 'node:fs/promises'
+import { readFile, stat, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
@@ -31,15 +30,32 @@ try {
 }
 
 // rate_limits 僅 Pro/Max 且 session 有 API 回應後才有
-// 為空值時不覆寫既有檔案，避免 session 剛啟動(首次 API 回應前)洗掉先前的有效資料；
-// 檔案不存在時仍寫入 null，讓面板能區分「statusline 有在執行但沒資料」與「從未設定」
+// 為空值時保留既有數值，避免 session 剛啟動(首次 API 回應前)洗掉先前的有效資料，
+// 但仍重寫檔案讓 mtime 前進——面板據此把兩件事分開判斷：
+//      檔案 mtime: statusline 心跳 (Claude Code 是否還在執行)
+//      captured_at: 數值本身的擷取時間 (官方百分比是否還新鮮)
 const dumpPath = join(homedir(), '.claude', 'rate_limits.json')
 try {
+  let dump = { rate_limits: null, captured_at: null }
+
   if (data.rate_limits != null) {
-    await writeFile(dumpPath, JSON.stringify({ rate_limits: data.rate_limits }))
-  } else if (!existsSync(dumpPath)) {
-    await writeFile(dumpPath, JSON.stringify({ rate_limits: null }))
+    dump = { rate_limits: data.rate_limits, captured_at: new Date().toISOString() }
+  } else {
+    try {
+      const [prev, info] = await Promise.all([
+        readFile(dumpPath, 'utf8').then(JSON.parse),
+        stat(dumpPath),
+      ])
+      // 舊版格式沒有 captured_at：以覆寫前的 mtime 補上 (那正是數值寫入的時刻)，
+      // 否則心跳會讓這個欄位永遠是空值，面板無從判斷數值新鮮度
+      const capturedAt = prev.captured_at ?? (prev.rate_limits ? info.mtime.toISOString() : null)
+      dump = { rate_limits: prev.rate_limits ?? null, captured_at: capturedAt }
+    } catch {
+      // 檔案不存在或內容損毀：寫入空狀態，讓面板能區分「statusline 有在執行但沒資料」與「從未設定」
+    }
   }
+
+  await writeFile(dumpPath, JSON.stringify(dump))
 } catch {
   // dump 失敗不能影響 statusline 顯示
 }

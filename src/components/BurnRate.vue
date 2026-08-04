@@ -51,7 +51,7 @@ const option = computed(() => {
   <!-- BurnRate - start -->
   <div class="card bg-base-100 shadow-md md:col-span-2">
     <div class="card-body gap-3">
-      <h2 class="card-title text-sm font-medium text-base-content/70">燃燒速率</h2>
+      <h2 class="card-title text-sm font-medium text-base-content/70">用量趨勢</h2>
       <template v-if="burnRate">
         <div class="grid grid-cols-2 gap-2">
           <div>

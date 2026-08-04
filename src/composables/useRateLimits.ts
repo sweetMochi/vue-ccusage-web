@@ -1,8 +1,14 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import type { RateLimits, RateLimitsResponse, RateLimitWindow } from '../types/statusline'
+import type {
+  LimitStatus,
+  RateLimits,
+  RateLimitsResponse,
+  RateLimitWindow,
+  RefreshLimitsResponse,
+} from '../types/statusline'
 
-/** dump 檔超過此毫秒數未更新即視為過期 (Claude Code 未在執行) */
-const STALE_MS = 10 * 60 * 1000
+/** 官方數值超過此毫秒數未更新即標示為可能不是最新 */
+const AGING_MS = 10 * 60 * 1000
 
 /**
  * 輪詢 /api/limits 並提供 statusline 官方限額 (rate_limits) 與衍生值。
@@ -11,8 +17,11 @@ const STALE_MS = 10 * 60 * 1000
 export function useRateLimits(intervalMs = 30_000) {
   const rateLimits = ref<RateLimits | null>(null)
 
-  /** dump 檔最後更新時間，null 表示尚未設定 statusline script */
+  /** dump 檔最後更新時間 (statusline 心跳)，null 表示尚未設定 statusline script */
   const updatedAt = ref<Date | null>(null)
+
+  /** 官方數值最後一次實際擷取的時間，null 表示從未取得或 dump 檔為舊版格式 */
+  const capturedAt = ref<Date | null>(null)
 
   const error = ref<string | null>(null)
 
@@ -36,6 +45,7 @@ export function useRateLimits(intervalMs = 30_000) {
 
       rateLimits.value = data.rate_limits
       updatedAt.value = data.updated_at ? new Date(data.updated_at) : null
+      capturedAt.value = data.captured_at ? new Date(data.captured_at) : null
       error.value = null
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e)
@@ -55,14 +65,31 @@ export function useRateLimits(intervalMs = 30_000) {
     clearInterval(clockTimer)
   })
 
-  /** 官方資料是否過期：dump 檔不存在或過久未更新 (Claude Code 未在執行) */
-  const isStale = computed(() => {
+  /** statusline 是否已停止更新 (Claude Code 未在執行，或閒置到不再重繪狀態列) */
+  const isStatuslineIdle = computed(() => {
     if (!updatedAt.value) return true
-    return now.value - updatedAt.value.getTime() > STALE_MS
+    return now.value - updatedAt.value.getTime() > AGING_MS
+  })
+
+  /** 官方數值是否過久未更新；舊版 dump 檔無 captured_at 時退回檔案 mtime 判斷 */
+  const isDataAging = computed(() => {
+    const at = capturedAt.value ?? updatedAt.value
+    if (!at) return true
+    return now.value - at.getTime() > AGING_MS
   })
 
   const fiveHour = computed<RateLimitWindow | null>(() => rateLimits.value?.five_hour ?? null)
   const sevenDay = computed<RateLimitWindow | null>(() => rateLimits.value?.seven_day ?? null)
+
+  /** 視窗的資料狀態；expired 優先於 aging (已重置的百分比一定失效) */
+  function statusOf(window: RateLimitWindow | null): LimitStatus {
+    if (!window) return 'missing'
+    if (window.resets_at * 1000 <= now.value) return 'expired'
+    return isDataAging.value ? 'aging' : 'ok'
+  }
+
+  const fiveHourStatus = computed(() => statusOf(fiveHour.value))
+  const sevenDayStatus = computed(() => statusOf(sevenDay.value))
 
   /** 距視窗重置的毫秒數，無資料時為 0 */
   function remainingMsOf(window: RateLimitWindow | null) {
@@ -73,16 +100,66 @@ export function useRateLimits(intervalMs = 30_000) {
   const fiveHourRemainingMs = computed(() => remainingMsOf(fiveHour.value))
   const sevenDayRemainingMs = computed(() => remainingMsOf(sevenDay.value))
 
+  /**
+   * 是否值得開 session 重取官方數值。
+   * dump 檔從未出現代表 statusline 尚未設定，開了也拿不到，不觸發
+   */
+  const needsTrigger = computed(() => {
+    if (!updatedAt.value) return false
+    if (!rateLimits.value) return true
+    return [fiveHourStatus.value, sevenDayStatus.value].some(
+      (s) => s === 'aging' || s === 'expired'
+    )
+  })
+
+  /** 觸發中 (隱藏 session 啟動到官方數值寫入，實測約 4 秒) */
+  const triggering = ref(false)
+
+  /** 觸發結果訊息；null 表示成功或尚未觸發過 */
+  const triggerError = ref<string | null>(null)
+
+  /**
+   * 開一個隱藏的 Claude Code session 逼 statusline 重寫官方數值。
+   * 會送出一則 haiku 訊息，消耗正在被測量的 5 小時配額
+   */
+  async function triggerUpdate() {
+    triggering.value = true
+    triggerError.value = null
+    try {
+      const res = await fetch('/api/refresh-limits', { method: 'POST' })
+      const data = (await res.json()) as RefreshLimitsResponse
+
+      if (data.status !== 'updated') {
+        triggerError.value = data.message ?? `觸發失敗 (${data.status})`
+        return
+      }
+
+      await refresh()
+    } catch (e) {
+      triggerError.value = e instanceof Error ? e.message : String(e)
+    } finally {
+      triggering.value = false
+    }
+  }
+
   return {
     rateLimits,
     fiveHour,
     sevenDay,
+    fiveHourStatus,
+    sevenDayStatus,
     fiveHourRemainingMs,
     sevenDayRemainingMs,
-    isStale,
+    isStatuslineIdle,
+    isDataAging,
+    needsTrigger,
+    triggering,
+    triggerError,
     updatedAt,
+    capturedAt,
     error,
     loading,
     refresh,
+    triggerUpdate,
   }
 }

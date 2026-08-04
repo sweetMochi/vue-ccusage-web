@@ -23,7 +23,7 @@ export function formatUsd(n: number): string {
 }
 
 /**
- * Unix epoch 秒轉「MM/DD（週）HH:mm」的重置時間（本地時區）
+ * Unix epoch 秒轉「MM/DD (週) HH:mm」的重置時間 (本地時區)
  */
 export function formatResetAt(epochSeconds: number): string {
   const d = new Date(epochSeconds * 1000)
@@ -32,5 +32,5 @@ export function formatResetAt(epochSeconds: number): string {
   const dd = String(d.getDate()).padStart(2, '0')
   const hh = String(d.getHours()).padStart(2, '0')
   const mi = String(d.getMinutes()).padStart(2, '0')
-  return `${mm}/${dd}（${weekday}）${hh}:${mi}`
+  return `${mm}/${dd} (${weekday}) ${hh}:${mi}`
 }
