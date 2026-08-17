@@ -14,6 +14,51 @@
 
 純規劃或文件的 commit 不單獨發版，併入實作完成的該版本。
 
+## [1.4.0] - 2026-08-17
+
+面板改為四語系：繁中 / 簡中 / 英 / 日，首次進入依瀏覽器語言偵測，
+並把後端錯誤從「現成中文文案」改為「錯誤代碼」，讓錯誤訊息也能隨語言切換重譯
+
+> `zh-TW` 為基準語系，`MessageKey` 取自 `zh-TW` 字典的 key，
+> 其餘語系少了任一 key 在 `npm run build` 的型別檢查即失敗
+
+### 新增
+
+- `useI18n` composable 與 `src/locales/`：四語系字典表與 `t()` 插值 (`{name}` 取代)，
+  語系為模組層級單例，切換時所有元件同步；選擇記錄於 localStorage
+- 首次進入依 `navigator.languages` 偏好順序偵測語系，中文分辨字體
+  (`Hant` 與港澳台地區視為繁體，其餘簡體)，無相符者退回 `zh-TW`
+- header 語言選擇器：選項一律以該語言自身書寫，不隨當前語系翻譯
+- `AppError` (`code` + `detail`) 與 `ErrorCode` 型別：後端只回代碼，
+  文案由前端依當前語系解析；`detail` 承載 CLI stderr、例外訊息與逾時秒數等
+  原始技術資訊，不翻譯
+- `formatTime`：毫秒時刻轉當地時間，取代 header 直接呼叫 `toLocaleTimeString`
+
+### 變更
+
+- `formatTokens` / `formatResetAt` 改為吃 `locale` 並走 `Intl`，
+  數字千分位與月日、星期的排列順序交由語系決定；`Intl` 物件依語系快取
+  (倒數每秒重繪會反覆呼叫)，`formatResetAt` 固定 `hourCycle: 'h23'`
+  避免部分語系產生 `24:xx`
+- `/api/blocks`、`/api/limits` 與 `refresh-limits.mjs` 的失敗回應改為
+  `{ code, detail }`；`useCcusage` / `useRateLimits` 的 `error` 型別
+  由 `string` 改為 `AppError`
+- `RefreshLimitsResponse` 的 `status` 由四態收斂為 `updated` / `failed`，
+  原因改由 `error.code` 表達 (`trigger-timeout` / `trigger-unsupported` /
+  `trigger-failed` / `script-no-output` / `method-not-allowed`)；
+  vite.config.ts 改為直接引用同一份回應型別，代碼不會前後端各寫一套
+- `themeOptions` 改為 `themeModes`，只保留顯示順序，
+  主題名稱移入 `theme.*` 訊息 key
+- `TokenGauge` 的 `limitLabel` 預設值移出 `withDefaults` 改由 computed 取得
+  (`withDefaults` 為模組層級求值，不會隨語言切換更新)
+- `document.documentElement.lang` 與 `document.title` 隨語系切換更新
+- README 補上多語系功能說明、錯誤代碼設計與新增檔案的專案結構
+
+### 移除
+
+- `ThemeOption` 型別：主題選項不再帶 label，由訊息 key 提供
+- 後端回應的 `message` 欄位與腳本、middleware 內的中文硬編文案
+
 ## [1.3.0] - 2026-08-04
 
 第二期開發：把「Claude Code 是否還在執行」與「官方數值是否還新鮮」拆成兩件事判斷，
@@ -171,6 +216,7 @@
 - 輪詢失敗時保留上次資料，僅顯示更新中斷警示
 - vite dev server 啟動時自動開啟瀏覽器
 
+[1.4.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.0.1...v1.1.0
