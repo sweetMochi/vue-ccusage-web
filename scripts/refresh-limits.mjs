@@ -66,12 +66,11 @@ function startHiddenSession() {
   })
 }
 
+// 失敗一律回傳錯誤代碼而非現成文案，由前端依當前語系翻譯
+// detail 承載原始技術細節 (例外訊息、逾時秒數)，不翻譯
 async function main() {
   if (process.platform !== 'win32') {
-    return {
-      status: 'unsupported',
-      message: '自動觸發僅支援 Windows，請自行開一個 Claude Code session',
-    }
+    return { status: 'failed', error: { code: 'trigger-unsupported' } }
   }
 
   const before = await readCapturedAt()
@@ -80,7 +79,7 @@ async function main() {
   try {
     pid = await startHiddenSession()
   } catch (e) {
-    return { status: 'error', message: `無法啟動 claude session：${e.message}` }
+    return { status: 'failed', error: { code: 'trigger-failed', detail: e.message } }
   }
 
   try {
@@ -89,7 +88,10 @@ async function main() {
       await sleep(POLL_MS)
       if ((await readCapturedAt()) !== before) return { status: 'updated' }
     }
-    return { status: 'timeout', message: `${TIMEOUT_MS / 1000} 秒內未取得新的官方數值` }
+    return {
+      status: 'failed',
+      error: { code: 'trigger-timeout', detail: String(TIMEOUT_MS / 1000) },
+    }
   } finally {
     await killTree(pid)
   }

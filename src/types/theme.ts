@@ -33,13 +33,3 @@ export interface ChartTheme {
  *      'dark' 暗
  */
 export type ThemeMode = 'system' | 'light' | 'dark'
-
-/**
- * 主題選項
- */
-export interface ThemeOption {
-  /** 主題模式 */
-  value: ThemeMode
-  /** 主題名稱 */
-  label: string
-}

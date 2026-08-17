@@ -30,6 +30,6 @@ export interface TokenGauge {
    *      null: 表示尚無足夠資料
    */
   limit?: number | null
-  /** 預設註腳中上限的說明文字 */
+  /** 預設註腳中上限的說明文字；無值時取當前語系的 `gauge.limitLabel` */
   limitLabel?: string
 }

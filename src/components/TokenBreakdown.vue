@@ -2,6 +2,7 @@
 // Token 組成分布：四類 token 的圓餅圖
 import type { EChartsOption } from 'echarts'
 import { computed } from 'vue'
+import { useI18n } from '../composables/useI18n'
 import { useTheme } from '../composables/useTheme'
 import { VChart } from '../lib/echarts'
 import { formatTokens } from '../lib/format'
@@ -13,10 +14,11 @@ const props = defineProps<{
 }>()
 
 const { isDark } = useTheme()
+const { locale, t } = useI18n()
 const theme = computed(() => (isDark.value ? darkTheme : lightTheme))
 
 const option = computed(() => {
-  const t = theme.value
+  const palette = theme.value
   const c = props.tokenCounts
 
   return {
@@ -24,7 +26,11 @@ const option = computed(() => {
       trigger: 'item',
       formatter: (p: unknown) => {
         const item = p as { name: string; value: number; percent: number }
-        return `${item.name}：${formatTokens(item.value)} (${item.percent}%)`
+        return t('breakdown.tooltip', {
+          name: item.name,
+          value: formatTokens(item.value, locale.value),
+          percent: item.percent,
+        })
       },
     },
     legend: {
@@ -32,7 +38,7 @@ const option = computed(() => {
       itemWidth: 10,
       itemHeight: 10,
       textStyle: {
-        color: t.inkSecondary,
+        color: palette.inkSecondary,
         fontSize: 11,
       },
     },
@@ -43,35 +49,43 @@ const option = computed(() => {
         center: ['50%', '44%'],
         // 區段間以 2px 表面色間隔取代邊框
         itemStyle: {
-          borderColor: t.surface,
+          borderColor: palette.surface,
           borderWidth: 2,
           borderRadius: 2,
         },
         label: {
-          color: t.inkSecondary,
+          color: palette.inkSecondary,
           fontSize: 11,
           formatter: '{b} {d}%',
         },
         labelLine: {
           lineStyle: {
-            color: t.grid,
+            color: palette.grid,
           },
         },
         labelLayout: {
           hideOverlap: true,
         },
         data: [
-          { name: '輸入', value: c.inputTokens, itemStyle: { color: t.series[0] } },
-          { name: '輸出', value: c.outputTokens, itemStyle: { color: t.series[1] } },
           {
-            name: '快取讀取',
-            value: c.cacheReadInputTokens,
-            itemStyle: { color: t.series[2] },
+            name: t('breakdown.input'),
+            value: c.inputTokens,
+            itemStyle: { color: palette.series[0] },
           },
           {
-            name: '快取寫入',
+            name: t('breakdown.output'),
+            value: c.outputTokens,
+            itemStyle: { color: palette.series[1] },
+          },
+          {
+            name: t('breakdown.cacheRead'),
+            value: c.cacheReadInputTokens,
+            itemStyle: { color: palette.series[2] },
+          },
+          {
+            name: t('breakdown.cacheWrite'),
             value: c.cacheCreationInputTokens,
-            itemStyle: { color: t.series[3] },
+            itemStyle: { color: palette.series[3] },
           },
         ],
       },
@@ -84,7 +98,9 @@ const option = computed(() => {
   <!-- TokenBreakdown - start -->
   <div class="card bg-base-100 shadow-md">
     <div class="card-body gap-1 min-h-80">
-      <h2 class="card-title text-sm font-medium text-base-content/70">Token 組成</h2>
+      <h2 class="card-title text-sm font-medium text-base-content/70">
+        {{ t('breakdown.title') }}
+      </h2>
       <VChart :option autoresize />
     </div>
   </div>

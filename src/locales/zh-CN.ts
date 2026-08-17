@@ -1,0 +1,62 @@
+// 简体中文
+// key 由 zh-TW 決定，缺漏會在 locales/index.ts 的型別標註上報錯
+
+export default {
+  'app.title': 'Claude Token 用量面板',
+  'app.heading': 'Claude Token Usage',
+  'app.updatedAt': '更新于 {time}',
+  'app.refresh': '刷新（必要时更新官方数值）',
+  'app.refreshing': '正在打开 Claude Code 会话获取官方数值…',
+  'app.refreshLabel': '立即刷新',
+  'app.refreshingLabel': '正在打开会话更新官方数值',
+  'app.themeSwitch': '主题切换',
+  'app.localeSwitch': '语言切换',
+  'app.loading': '正在读取 ccusage 数据…',
+  'app.loadFailed': '读取失败：{message}',
+  'app.updateFailed': '更新失败，显示上次数据：{message}',
+  'app.triggerFailed': '官方数值更新失败：{message}',
+  'app.noUsage': '最近没有使用 AI，有使用记录才能判断剩余用量',
+
+  'gauge.fiveHour': '当前用量',
+  'gauge.sevenDay': '本周用量',
+  'gauge.officialFootnote': '{tokens} tokens・重置于 {time}',
+  'gauge.estimateFootnote': '{used} / {limit}（历史最高 block 估算）',
+  'gauge.defaultFootnote': '{used} / {limit}（{label}）',
+  'gauge.resetAt': '重置于 {time}',
+  'gauge.windowExpired': '窗口已于 {time} 重置，等待 Claude Code 更新数值',
+  'gauge.noOfficial': '无官方数据：请确认已按 README 配置 statusline dump script',
+  'gauge.limitLabel': '历史最高 block',
+  'gauge.aging.idle': '（Claude Code 未在运行或处于空闲，显示上次数据）',
+  'gauge.aging.stale': '（官方尚未回报新数值，显示上次数据）',
+
+  'time.title': '重置时间',
+  'time.ratioLabel': 'block 剩余时间比例',
+  'time.remaining': 'block 剩余 {percent}%',
+
+  'breakdown.title': 'Token 构成',
+  'breakdown.input': '输入',
+  'breakdown.output': '输出',
+  'breakdown.cacheRead': '缓存读取',
+  'breakdown.cacheWrite': '缓存写入',
+  'breakdown.tooltip': '{name}：{value}（{percent}%）',
+
+  'burn.title': '用量趋势',
+  'burn.tokensPerMinute': 'tokens / 分钟',
+  'burn.costPerHour': '费用 / 小时',
+  'burn.sampling': '趋势线采样累积中…',
+  'burn.noData': '暂无速率数据',
+  'burn.tooltip': '{time}<br/>{value} tokens/分钟',
+
+  'theme.system': '默认',
+  'theme.light': '亮',
+  'theme.dark': '暗',
+
+  'error.ccusage-failed': 'ccusage 运行失败：{detail}',
+  'error.http': '服务器返回 HTTP {detail}',
+  'error.network': '无法连接到本地服务器：{detail}',
+  'error.script-no-output': '触发脚本没有返回结果：{detail}',
+  'error.method-not-allowed': '请以 POST 调用 /api/refresh-limits',
+  'error.trigger-timeout': '{detail} 秒内未取得新的官方数值',
+  'error.trigger-unsupported': '自动触发仅支持 Windows，请自行打开一个 Claude Code 会话',
+  'error.trigger-failed': '无法启动 Claude Code 会话：{detail}',
+}

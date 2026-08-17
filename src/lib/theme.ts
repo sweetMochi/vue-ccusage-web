@@ -1,4 +1,4 @@
-import type { ChartTheme, ThemeOption } from '../types/theme'
+import type { ChartTheme, ThemeMode } from '../types/theme'
 
 /**
  * 明亮配色
@@ -25,10 +25,7 @@ export const darkTheme: ChartTheme = {
 }
 
 /**
- * 主題選項
+ * 主題選項的顯示順序
+ * 名稱不放在這裡，由 `theme.*` 訊息 key 依當前語系提供
  */
-export const themeOptions: ThemeOption[] = [
-  { value: 'system', label: '預設' },
-  { value: 'light', label: '亮' },
-  { value: 'dark', label: '暗' },
-]
+export const themeModes: ThemeMode[] = ['system', 'light', 'dark']

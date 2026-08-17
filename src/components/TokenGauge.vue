@@ -2,6 +2,7 @@
 // Token 用量面板
 import type { EChartsOption } from 'echarts'
 import { computed } from 'vue'
+import { useI18n } from '../composables/useI18n'
 import { useTheme } from '../composables/useTheme'
 import { VChart } from '../lib/echarts'
 import { formatTokens } from '../lib/format'
@@ -12,10 +13,12 @@ const props = withDefaults(defineProps<TokenGauge>(), {
   percent: undefined,
   totalTokens: 0,
   limit: null,
-  limitLabel: '歷史最高 block',
+  // 預設文案取自語系字典，不能寫在 withDefaults (那是模組層級求值，切換語言不會更新)
+  limitLabel: undefined,
 })
 
 const { isDark } = useTheme()
+const { locale, t } = useI18n()
 const theme = computed(() => (isDark.value ? darkTheme : lightTheme))
 
 /** 儀表顯示的百分比；null 表示無資料 */
@@ -25,6 +28,15 @@ const displayPercent = computed<number | null>(() => {
   }
   return props.limit ? Math.min(100, (props.totalTokens / props.limit) * 100) : 0
 })
+
+/** 未提供 footnote 插槽時的預設註腳 */
+const defaultFootnote = computed(() =>
+  t('gauge.defaultFootnote', {
+    used: formatTokens(props.totalTokens, locale.value),
+    limit: props.limit === null ? '—' : formatTokens(props.limit, locale.value),
+    label: props.limitLabel ?? t('gauge.limitLabel'),
+  })
+)
 
 const option = computed(() => {
   return {
@@ -74,11 +86,7 @@ const option = computed(() => {
       <h2 class="card-title text-sm font-medium text-base-content/70">{{ title }}</h2>
       <VChart :option autoresize />
       <p class="text-center text-xs text-base-content/50">
-        <slot name="footnote">
-          {{ formatTokens(totalTokens) }} / {{ limit === null ? '—' : formatTokens(limit) }} ({{
-            limitLabel
-          }})
-        </slot>
+        <slot name="footnote">{{ defaultFootnote }}</slot>
       </p>
     </div>
   </div>

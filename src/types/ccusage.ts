@@ -1,6 +1,8 @@
 // `npx ccusage blocks --json` 回傳結構的型別定義
 // 欄位對照 README「ccusage 回傳資料」一節
 
+import type { AppError } from './i18n'
+
 /**
  * block 內四類 token 的用量統計
  * 加總值 (totalTokens) 不能直接代表費用，看 costUSD 才準。
@@ -84,7 +86,8 @@ export interface CcusageBlocksResponse {
 
 /**
  * middleware 執行失敗時的回應
+ * 只回傳錯誤代碼，文案由前端依當前語系解析
  */
 export interface CcusageApiError {
-  error: string
+  error: AppError
 }

@@ -2,10 +2,11 @@
 // 燃燒速率：即時數值 + 隨輪詢累積的迷你趨勢線
 import type { EChartsOption } from 'echarts'
 import { computed } from 'vue'
+import { useI18n } from '../composables/useI18n'
 import { useTheme } from '../composables/useTheme'
 import { darkTheme, lightTheme } from '../lib/theme'
 import { VChart } from '../lib/echarts'
-import { formatTokens, formatUsd } from '../lib/format'
+import { formatTime, formatTokens, formatUsd } from '../lib/format'
 import type { CcusageBurnRate } from '../types/ccusage'
 import type { BurnRateSample } from '../types/components'
 
@@ -17,6 +18,7 @@ const props = defineProps<{
 }>()
 
 const { isDark } = useTheme()
+const { locale, t } = useI18n()
 const theme = computed(() => (isDark.value ? darkTheme : lightTheme))
 
 const option = computed(() => {
@@ -30,7 +32,10 @@ const option = computed(() => {
           value: [number, number]
         }
         const [time, value] = p.value
-        return `${new Date(time).toLocaleTimeString()}<br/>${formatTokens(value)} tokens/min`
+        return t('burn.tooltip', {
+          time: formatTime(time, locale.value),
+          value: formatTokens(value, locale.value),
+        })
       },
     },
     xAxis: { type: 'time', show: false },
@@ -51,26 +56,26 @@ const option = computed(() => {
   <!-- BurnRate - start -->
   <div class="card bg-base-100 shadow-md md:col-span-2">
     <div class="card-body gap-3">
-      <h2 class="card-title text-sm font-medium text-base-content/70">用量趨勢</h2>
+      <h2 class="card-title text-sm font-medium text-base-content/70">{{ t('burn.title') }}</h2>
       <template v-if="burnRate">
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <div class="text-xs text-base-content/50">tokens / 分鐘</div>
+            <div class="text-xs text-base-content/50">{{ t('burn.tokensPerMinute') }}</div>
             <div class="text-2xl font-semibold">
-              {{ formatTokens(burnRate.tokensPerMinute) }}
+              {{ formatTokens(burnRate.tokensPerMinute, locale) }}
             </div>
           </div>
           <div>
-            <div class="text-xs text-base-content/50">費用 / 小時</div>
+            <div class="text-xs text-base-content/50">{{ t('burn.costPerHour') }}</div>
             <div class="text-2xl font-semibold">
               {{ formatUsd(burnRate.costPerHour) }}
             </div>
           </div>
         </div>
         <VChart v-if="samples.length >= 2" class="h-14 w-full" :option="option" autoresize />
-        <p v-else class="text-xs text-base-content/40">趨勢線取樣累積中…</p>
+        <p v-else class="text-xs text-base-content/40">{{ t('burn.sampling') }}</p>
       </template>
-      <p v-else class="text-sm text-base-content/50">尚無速率資料</p>
+      <p v-else class="text-sm text-base-content/50">{{ t('burn.noData') }}</p>
     </div>
   </div>
   <!-- BurnRate - end -->

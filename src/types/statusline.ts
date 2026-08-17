@@ -1,3 +1,5 @@
+import type { AppError } from './i18n'
+
 /**
  * 單一限額視窗 (five_hour / seven_day)
  */
@@ -53,12 +55,10 @@ export interface RateLimitsResponse {
  * POST /api/refresh-limits 回應
  *
  *      updated: 已開 session 並取得新的官方數值
- *      timeout: session 開起來了但逾時仍未寫入新數值
- *      unsupported: 非 Windows，無法自動觸發
- *      error: 啟動失敗或腳本異常
+ *      failed: 未取得新數值，error 帶有原因代碼
  */
 export interface RefreshLimitsResponse {
-  status: 'updated' | 'timeout' | 'unsupported' | 'error'
-  /** 非 updated 時的說明 */
-  message?: string
+  status: 'updated' | 'failed'
+  /** 非 updated 時的原因；只帶代碼，文案由前端依當前語系解析 */
+  error?: AppError
 }

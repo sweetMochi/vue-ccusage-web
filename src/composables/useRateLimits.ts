@@ -1,4 +1,5 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import type { AppError } from '../types/i18n'
 import type {
   LimitStatus,
   RateLimits,
@@ -23,7 +24,8 @@ export function useRateLimits(intervalMs = 30_000) {
   /** 官方數值最後一次實際擷取的時間，null 表示從未取得或 dump 檔為舊版格式 */
   const capturedAt = ref<Date | null>(null)
 
-  const error = ref<string | null>(null)
+  /** 錯誤代碼，文案在畫面上依當前語系解析 */
+  const error = ref<AppError | null>(null)
 
   /** 首次載入中 (之後的輪詢失敗只更新 error，不清掉舊資料) */
   const loading = ref(true)
@@ -37,10 +39,11 @@ export function useRateLimits(intervalMs = 30_000) {
   async function refresh() {
     try {
       const res = await fetch('/api/limits')
-      const data = (await res.json()) as RateLimitsResponse & { error?: string }
+      const data = (await res.json()) as RateLimitsResponse & { error?: AppError }
 
       if (!res.ok) {
-        throw new Error(data.error ?? `HTTP ${res.status}`)
+        error.value = data.error ?? { code: 'http', detail: String(res.status) }
+        return
       }
 
       rateLimits.value = data.rate_limits
@@ -48,7 +51,8 @@ export function useRateLimits(intervalMs = 30_000) {
       capturedAt.value = data.captured_at ? new Date(data.captured_at) : null
       error.value = null
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e)
+      // fetch 或 JSON 解析失敗：dev server 沒在執行，或回應不是預期的 JSON
+      error.value = { code: 'network', detail: e instanceof Error ? e.message : String(e) }
     } finally {
       loading.value = false
     }
@@ -115,8 +119,8 @@ export function useRateLimits(intervalMs = 30_000) {
   /** 觸發中 (隱藏 session 啟動到官方數值寫入，實測約 4 秒) */
   const triggering = ref(false)
 
-  /** 觸發結果訊息；null 表示成功或尚未觸發過 */
-  const triggerError = ref<string | null>(null)
+  /** 觸發結果的錯誤代碼；null 表示成功或尚未觸發過 */
+  const triggerError = ref<AppError | null>(null)
 
   /**
    * 開一個隱藏的 Claude Code session 逼 statusline 重寫官方數值。
@@ -130,13 +134,13 @@ export function useRateLimits(intervalMs = 30_000) {
       const data = (await res.json()) as RefreshLimitsResponse
 
       if (data.status !== 'updated') {
-        triggerError.value = data.message ?? `觸發失敗 (${data.status})`
+        triggerError.value = data.error ?? { code: 'trigger-failed' }
         return
       }
 
       await refresh()
     } catch (e) {
-      triggerError.value = e instanceof Error ? e.message : String(e)
+      triggerError.value = { code: 'network', detail: e instanceof Error ? e.message : String(e) }
     } finally {
       triggering.value = false
     }

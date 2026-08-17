@@ -6,10 +6,11 @@ import TokenGauge from './components/TokenGauge.vue'
 import { computed } from 'vue'
 import { useBurnRateHistory } from './composables/useBurnRateHistory'
 import { useCcusage } from './composables/useCcusage'
+import { useI18n } from './composables/useI18n'
 import { useRateLimits } from './composables/useRateLimits'
 import { useTheme } from './composables/useTheme'
-import { formatResetAt, formatTokens } from './lib/format'
-import { themeOptions } from './lib/theme'
+import { formatResetAt, formatTime, formatTokens } from './lib/format'
+import { themeModes } from './lib/theme'
 import type { LimitStatus, RateLimitWindow } from './types/statusline'
 
 const {
@@ -36,6 +37,7 @@ const {
   triggerUpdate,
 } = useRateLimits()
 const { mode } = useTheme()
+const { locale, t, localizeError, localeOptions } = useI18n()
 
 /**
  * 手動重新整理：先重抓兩條資料流，官方數值仍過期時再開一個隱藏的
@@ -58,9 +60,7 @@ const sevenDayOfficial = computed(() => usableOf(sevenDay.value, sevenDayStatus.
 /** 數值過久未更新時的註記，並指出是 Claude Code 沒在跑還是官方尚未回報新值 */
 function agingNote(status: LimitStatus) {
   if (status !== 'aging') return ''
-  return isStatuslineIdle.value
-    ? ' (Claude Code 未在執行或閒置中，顯示上次資料)'
-    : ' (官方尚未回報新數值，顯示上次資料)'
+  return isStatuslineIdle.value ? t('gauge.aging.idle') : t('gauge.aging.stale')
 }
 </script>
 
@@ -68,95 +68,112 @@ function agingNote(status: LimitStatus) {
   <main class="min-h-screen bg-base-200 p-4 md:p-8">
     <div class="mx-auto max-w-5xl space-y-4">
       <header class="flex flex-wrap items-center justify-between gap-2">
-        <h1 class="text-xl font-bold">Claude Token Usage</h1>
+        <h1 class="text-xl font-bold">{{ t('app.heading') }}</h1>
         <div class="flex items-center gap-2">
           <p v-if="updatedAt" class="text-xs text-base-content/50">
-            更新於 {{ updatedAt.toLocaleTimeString() }}
+            {{ t('app.updatedAt', { time: formatTime(updatedAt.getTime(), locale) }) }}
           </p>
           <button
             class="btn btn-ghost btn-xs"
             :disabled="triggering"
-            :aria-label="triggering ? '正在開 session 更新官方數值' : '立即重新整理'"
-            :title="
-              triggering
-                ? '正在開 Claude Code session 取得官方數值…'
-                : '重新整理 (必要時更新官方數值)'
-            "
+            :aria-label="triggering ? t('app.refreshingLabel') : t('app.refreshLabel')"
+            :title="triggering ? t('app.refreshing') : t('app.refresh')"
             @click="refreshAll()"
           >
             <span v-if="triggering" class="loading loading-spinner loading-xs"></span>
             <template v-else>↻</template>
           </button>
-          <div class="join" role="group" aria-label="主題切換">
+          <div class="join" role="group" :aria-label="t('app.themeSwitch')">
             <button
-              v-for="opt in themeOptions"
-              :key="opt.value"
+              v-for="m in themeModes"
+              :key="m"
               class="btn btn-xs join-item"
-              :class="{ 'btn-active': mode === opt.value }"
-              @click="mode = opt.value"
+              :class="{ 'btn-active': mode === m }"
+              @click="mode = m"
             >
-              {{ opt.label }}
+              {{ t(`theme.${m}`) }}
             </button>
           </div>
+          <!-- 語言以自身書寫呈現，選單不隨當前語系翻譯 -->
+          <select
+            v-model="locale"
+            class="select select-xs w-auto"
+            :aria-label="t('app.localeSwitch')"
+          >
+            <option v-for="opt in localeOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
         </div>
       </header>
 
       <div v-if="loading" class="flex items-center gap-2 text-base-content/70">
         <span class="loading loading-spinner loading-sm"></span>
-        讀取 ccusage 資料中…
+        {{ t('app.loading') }}
       </div>
 
       <div v-else-if="error && !block" class="alert alert-error text-sm">
-        <span>讀取失敗：{{ error }}</span>
+        <span>{{ t('app.loadFailed', { message: localizeError(error) }) }}</span>
       </div>
 
       <template v-else>
         <!-- 輪詢失敗時保留上次資料，只提示更新中斷 -->
         <div v-if="error" class="alert alert-warning text-sm">
-          <span>更新失敗，顯示上次資料：{{ error }}</span>
+          <span>{{ t('app.updateFailed', { message: localizeError(error) }) }}</span>
         </div>
 
         <!-- 觸發官方數值更新失敗；限額卡照常顯示上次資料 -->
         <div v-if="triggerError" class="alert alert-warning text-sm">
-          <span>官方數值更新失敗：{{ triggerError }}</span>
+          <span>{{ t('app.triggerFailed', { message: localizeError(triggerError) }) }}</span>
         </div>
 
         <!-- 沒有 active block 時仍顯示用量儀表 (0 / max)，其餘卡片隱藏 -->
         <div v-if="!block" class="alert alert-info text-sm">
-          <span>最近沒有使用 AI，如果有使用紀錄才能判斷剩餘用量</span>
+          <span>{{ t('app.noUsage') }}</span>
         </div>
 
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <TimeRemaining v-if="block" :remainingMs :remainingRatio />
           <!-- 5 小時卡牌：statusline 官方 5 小時限額，為空值或視窗已重置時退回歷史最高估算 -->
           <TokenGauge
-            title="當前用量"
+            :title="t('gauge.fiveHour')"
             :percent="fiveHourOfficial?.used_percentage"
             :totalTokens="block?.totalTokens ?? 0"
             :limit="tokenLimit"
           >
             <template #footnote>
               <template v-if="fiveHourOfficial">
-                {{ formatTokens(block?.totalTokens ?? 0) }} tokens・重置於
-                {{ formatResetAt(fiveHourOfficial.resets_at) }}{{ agingNote(fiveHourStatus) }}
+                {{
+                  t('gauge.officialFootnote', {
+                    tokens: formatTokens(block?.totalTokens ?? 0, locale),
+                    time: formatResetAt(fiveHourOfficial.resets_at, locale),
+                  })
+                }}{{ agingNote(fiveHourStatus) }}
               </template>
               <template v-else>
-                {{ formatTokens(block?.totalTokens ?? 0) }} /
-                {{ tokenLimit === null ? '—' : formatTokens(tokenLimit) }} (歷史最高 block 估算)
+                {{
+                  t('gauge.estimateFootnote', {
+                    used: formatTokens(block?.totalTokens ?? 0, locale),
+                    limit: tokenLimit === null ? '—' : formatTokens(tokenLimit, locale),
+                  })
+                }}
               </template>
             </template>
           </TokenGauge>
           <!-- 每週卡牌：statusline 官方每週限額，不依賴 active block -->
-          <TokenGauge title="本週用量" :percent="sevenDayOfficial?.used_percentage ?? null">
+          <TokenGauge
+            :title="t('gauge.sevenDay')"
+            :percent="sevenDayOfficial?.used_percentage ?? null"
+          >
             <template #footnote>
               <template v-if="sevenDayOfficial">
-                重置於 {{ formatResetAt(sevenDayOfficial.resets_at)
+                {{ t('gauge.resetAt', { time: formatResetAt(sevenDayOfficial.resets_at, locale) })
                 }}{{ agingNote(sevenDayStatus) }}
               </template>
               <template v-else-if="sevenDay && sevenDayStatus === 'expired'">
-                視窗已於 {{ formatResetAt(sevenDay.resets_at) }} 重置，等待 Claude Code 更新數值
+                {{ t('gauge.windowExpired', { time: formatResetAt(sevenDay.resets_at, locale) }) }}
               </template>
-              <template v-else>無官方資料：請確認已依 README 設定 statusline dump script</template>
+              <template v-else>{{ t('gauge.noOfficial') }}</template>
             </template>
           </TokenGauge>
           <TokenBreakdown v-if="block" :tokenCounts="block.tokenCounts" />

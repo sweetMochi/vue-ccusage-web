@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
+// 前後端共用同一份回應型別，錯誤代碼不會兩邊各寫一套
+import type { RefreshLimitsResponse } from './src/types/statusline'
 
 // 於 dev server 註冊 GET /api/blocks
 // 瀏覽器無法執行 CLI，由 Node 端跑 ccusage 並把 JSON 轉交給前端
@@ -25,7 +27,12 @@ function ccusageApi(): Plugin {
             res.setHeader('Content-Type', 'application/json')
             if (err) {
               res.statusCode = 500
-              res.end(JSON.stringify({ error: stderr.trim() || err.message }))
+              // 只回代碼，文案由前端依當前語系解析；detail 為 CLI 原文不翻譯
+              res.end(
+                JSON.stringify({
+                  error: { code: 'ccusage-failed', detail: stderr.trim() || err.message },
+                })
+              )
               return
             }
             res.end(stdout)
@@ -75,10 +82,10 @@ function limitsApi(): Plugin {
 // /api/limits/refresh 會先被上面的 limitsApi 接走
 function refreshLimitsApi(): Plugin {
   /** 進行中的觸發；重複點擊時共用同一次，避免開出多個 session 重複消耗配額 */
-  let inFlight: Promise<{ status: string; message?: string }> | null = null
+  let inFlight: Promise<RefreshLimitsResponse> | null = null
 
   function runScript() {
-    return new Promise<{ status: string; message?: string }>((resolve) => {
+    return new Promise<RefreshLimitsResponse>((resolve) => {
       const script = fileURLToPath(new URL('scripts/refresh-limits.mjs', import.meta.url))
       execFile(
         process.execPath,
@@ -87,9 +94,12 @@ function refreshLimitsApi(): Plugin {
         (err, stdout) => {
           try {
             // 腳本失敗時以非 0 結束，但 stdout 仍是可解析的結果
-            resolve(JSON.parse(stdout.trim()))
+            resolve(JSON.parse(stdout.trim()) as RefreshLimitsResponse)
           } catch {
-            resolve({ status: 'error', message: err?.message ?? '觸發腳本沒有回傳結果' })
+            resolve({
+              status: 'failed',
+              error: { code: 'script-no-output', detail: err?.message ?? '' },
+            })
           }
         }
       )
@@ -105,7 +115,7 @@ function refreshLimitsApi(): Plugin {
         // 限定 POST：避免瀏覽器預抓等 GET 行為意外消耗配額
         if (req.method !== 'POST') {
           res.statusCode = 405
-          res.end(JSON.stringify({ status: 'error', message: '請以 POST 呼叫' }))
+          res.end(JSON.stringify({ status: 'failed', error: { code: 'method-not-allowed' } }))
           return
         }
 

@@ -1,5 +1,6 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import type { CcusageBlock, CcusageBlocksResponse } from '../types/ccusage'
+import type { CcusageApiError, CcusageBlock, CcusageBlocksResponse } from '../types/ccusage'
+import type { AppError } from '../types/i18n'
 
 /**
  * 輪詢 /api/blocks 並提供目前 active block 的狀態與衍生值。
@@ -11,7 +12,8 @@ export function useCcusage(intervalMs = 30_000) {
   /** token 用量上限：歷史最高 block 的 totalTokens (對應 ccusage --token-limit max) */
   const tokenLimit = ref<number | null>(null)
 
-  const error = ref<string | null>(null)
+  /** 錯誤代碼，文案在畫面上依當前語系解析 */
+  const error = ref<AppError | null>(null)
 
   /** 首次載入中 (之後的輪詢失敗只更新 error，不清掉舊資料) */
   const loading = ref(true)
@@ -27,10 +29,11 @@ export function useCcusage(intervalMs = 30_000) {
   async function refresh() {
     try {
       const res = await fetch('/api/blocks')
-      const data = (await res.json()) as CcusageBlocksResponse & { error?: string }
+      const data = (await res.json()) as CcusageBlocksResponse & Partial<CcusageApiError>
 
       if (!res.ok) {
-        throw new Error(data.error ?? `HTTP ${res.status}`)
+        error.value = data.error ?? { code: 'http', detail: String(res.status) }
+        return
       }
 
       const blocks = data.blocks.filter((b) => !b.isGap)
@@ -42,7 +45,8 @@ export function useCcusage(intervalMs = 30_000) {
       updatedAt.value = new Date()
       error.value = null
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e)
+      // fetch 或 JSON 解析失敗：dev server 沒在執行，或回應不是預期的 JSON
+      error.value = { code: 'network', detail: e instanceof Error ? e.message : String(e) }
     } finally {
       loading.value = false
     }

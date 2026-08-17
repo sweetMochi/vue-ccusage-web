@@ -32,6 +32,8 @@ Git 記錄中由 AI 參與的 commit 皆帶有 `Co-Authored-By: Claude` 署名�
 - **Token 組成分布**：input / output / cache read / cache creation 圓餅圖
 - **自動輪詢**：每 30 秒重新取得資料，倒數歸零時立即更新，另有手動重新整理鈕
 - **主題切換**：跟隨系統 / 亮 / 暗三態，選擇記錄於 localStorage，圖表配色同步切換
+- **多語系**：繁中 / 簡中 / 英文 / 日文，首次進入依瀏覽器語言偵測，
+  選擇記錄於 localStorage；數字與重置時間的排列順序交由 `Intl` 依語系決定
 
 ![儀表板版面預覽](docs/dashboard-preview.svg)
 
@@ -132,8 +134,11 @@ npm run refresh-limits
 | 不帶訊息只開 TUI                           | ✗ 同上，行程直接結束                            |
 | `Start-Process -WindowStyle Hidden` + 訊息 | ✓ 約 3 秒寫入新數值                             |
 
-> 因此此功能僅支援 Windows；其他平台 endpoint 會回 `unsupported`，
+> 因此此功能僅支援 Windows；其他平台 endpoint 會回 `trigger-unsupported`，
 > 面板保留 `aging` 標示，請自行開一個 Claude Code session
+
+> API 失敗一律回傳錯誤代碼而非現成文案 (`{ status, error: { code, detail } }`)，
+> 由前端依當前語系翻譯；`detail` 承載 CLI stderr 等原始技術資訊，不翻譯
 
 ## 專案結構
 
@@ -153,15 +158,23 @@ vue-ccusage-web/
 │   │   ├── ccusage.ts        # blocks JSON 的 TypeScript 型別
 │   │   ├── statusline.ts     # statusline rate_limits 與 /api/limits 型別
 │   │   ├── components.ts     # 元件 props 型別
+│   │   ├── i18n.ts           # 語系、訊息參數與錯誤代碼型別
 │   │   └── theme.ts          # 主題型別
+│   ├── locales/
+│   │   ├── index.ts          # 語系字典表 (型別標註即完整性檢查) 與語言選項
+│   │   ├── zh-TW.ts          # 繁體中文 — 基準語系，決定所有訊息 key
+│   │   ├── zh-CN.ts          # 簡體中文
+│   │   ├── en.ts             # 英文
+│   │   └── ja.ts             # 日文
 │   ├── lib/
 │   │   ├── echarts.ts        # ECharts 按需註冊
-│   │   ├── theme.ts          # 圖表配色 (明/暗，經 CVD 驗證) 與主題選項
-│   │   └── format.ts         # 數字 / 時間格式化
+│   │   ├── theme.ts          # 圖表配色 (明/暗，經 CVD 驗證) 與主題選項順序
+│   │   └── format.ts         # 數字 / 時間格式化 (依語系走 Intl)
 │   ├── composables/
 │   │   ├── useCcusage.ts     # 輪詢 /api/blocks、衍生值計算
 │   │   ├── useRateLimits.ts  # 輪詢 /api/limits、官方限額衍生值與四態新鮮度判斷
 │   │   ├── useBurnRateHistory.ts # burnRate 取樣累積 (趨勢線)
+│   │   ├── useI18n.ts        # 四語系 (繁中/簡中/英/日) 單一真相來源
 │   │   └── useTheme.ts       # 三態主題 (跟隨系統/亮/暗) 單一真相來源
 │   └── components/
 │       ├── TimeRemaining.vue # 剩餘時間圓環
