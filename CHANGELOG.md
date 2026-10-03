@@ -14,6 +14,15 @@
 
 純規劃或文件的 commit 不單獨發版，併入實作完成的該版本。
 
+## [Unreleased]
+
+### 變更
+
+- ccusage 加入 `devDependencies`，改用專案內鎖定的版本，不再依賴全域安裝
+- `/api/blocks` 改以 `process.execPath` 直接執行 ccusage 入口檔 (依其 `bin` 欄位解析)，
+  不再經過 npx 與 shell：專案路徑含空白時不會被拆開，回應時間約減半；
+  未安裝 ccusage 時回傳 `ccusage-failed`，不會改用全域版本或從網路下載
+
 ## [1.4.0] - 2026-08-17
 
 面板改為四語系：繁中 / 簡中 / 英 / 日，首次進入依瀏覽器語言偵測，
@@ -216,6 +225,7 @@
 - 輪詢失敗時保留上次資料，僅顯示更新中斷警示
 - vite dev server 啟動時自動開啟瀏覽器
 
+[Unreleased]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.4.0...HEAD
 [1.4.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.1.0...v1.2.0

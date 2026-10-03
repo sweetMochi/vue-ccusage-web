@@ -1,13 +1,23 @@
 import { execFile } from 'node:child_process'
 import { readFile, stat } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 // 前後端共用同一份回應型別，錯誤代碼不會兩邊各寫一套
 import type { RefreshLimitsResponse } from './src/types/statusline'
+
+// 依 ccusage 自身 package.json 的 bin 欄位找入口檔，套件調整內部目錄結構也不受影響
+// 每次請求才解析：未執行 npm install 時只讓 /api/blocks 回錯誤，不會讓 dev server 起不來
+function resolveCcusageCli() {
+  const require = createRequire(import.meta.url)
+  const pkgPath = require.resolve('ccusage/package.json')
+  const { bin } = require(pkgPath) as { bin: Record<string, string> }
+  return join(dirname(pkgPath), bin.ccusage)
+}
 
 // 於 dev server 註冊 GET /api/blocks
 // 瀏覽器無法執行 CLI，由 Node 端跑 ccusage 並把 JSON 轉交給前端
@@ -16,23 +26,32 @@ function ccusageApi(): Plugin {
     name: 'ccusage-api',
     configureServer(server) {
       server.middlewares.use('/api/blocks', (_req, res) => {
+        res.setHeader('Content-Type', 'application/json')
+
+        // 只回代碼，文案由前端依當前語系解析；detail 為 CLI 原文不翻譯
+        const fail = (detail: string) => {
+          res.statusCode = 500
+          res.end(JSON.stringify({ error: { code: 'ccusage-failed', detail } }))
+        }
+
+        let cli: string
+        try {
+          cli = resolveCcusageCli()
+        } catch (err) {
+          fail(err instanceof Error ? err.message : String(err))
+          return
+        }
+
+        // 以目前的 node 直接執行入口檔，不經 shell：路徑含空白也不會被拆開
         execFile(
-          'npx',
+          process.execPath,
           // 不加 --active
           // 需要全部 blocks 才能算 token 上限
-          ['ccusage', 'blocks', '--json'],
-          // Windows 上 npx 是 npx.cmd，需經由 shell 解析
-          { shell: true, windowsHide: true, timeout: 30_000 },
+          [cli, 'blocks', '--json'],
+          { windowsHide: true, timeout: 30_000 },
           (err, stdout, stderr) => {
-            res.setHeader('Content-Type', 'application/json')
             if (err) {
-              res.statusCode = 500
-              // 只回代碼，文案由前端依當前語系解析；detail 為 CLI 原文不翻譯
-              res.end(
-                JSON.stringify({
-                  error: { code: 'ccusage-failed', detail: stderr.trim() || err.message },
-                })
-              )
+              fail(stderr.trim() || err.message)
               return
             }
             res.end(stdout)

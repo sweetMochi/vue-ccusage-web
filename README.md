@@ -5,7 +5,7 @@
 ![Vibecoding](https://img.shields.io/badge/workflow-vibecoding-1baf7a)
 
 Claude Code Token 用量顯示面板 — 本地執行的 Vue 應用程式，
-透過 `npx ccusage blocks --json` 讀取目前 5 小時 block 的以儀表板呈現使用狀況
+透過 `ccusage blocks --json` 讀取目前 5 小時 block 的以儀表板呈現使用狀況
 
 ## 開發方式聲明
 
@@ -45,7 +45,7 @@ Git 記錄中由 AI 參與的 commit 皆帶有 `Co-Authored-By: Claude` 署名�
 | 建置工具 | Vite                                  | dev server 同時擔任本地 API                                      |
 | 樣式     | Tailwind CSS 4 + daisyUI 5            | stat / progress / radial-progress 元件                           |
 | 圖表     | vue-echarts (ECharts)                 | gauge、pie、sparkline                                            |
-| 資料來源 | `npx ccusage blocks --json`           | 由 Vite middleware 在 Node 端執行 (全部 blocks，供估算 fallback) |
+| 資料來源 | `ccusage blocks --json`               | 由 Vite middleware 在 Node 端執行 (全部 blocks，供估算 fallback) |
 | 官方限額 | Claude Code statusline `rate_limits`  | `scripts/statusline.mjs` dump 至 `~/.claude/rate_limits.json`    |
 
 ### 資料流
@@ -66,6 +66,9 @@ Vue composable useCcusage()
 > 瀏覽器無法直接執行 CLI，因此由 Vite 插件在 dev server 內註冊
 > `/api/blocks` endpoint，於 Node 端執行 `ccusage` 並回傳 JSON。
 > 本專案定位為「本地開發工具」，以 `npm run dev` 啟動即可使用。
+
+> ccusage 列於 `devDependencies`，版本由 `package-lock.json` 鎖定，不需要另外全域安裝；
+> Vite 插件依 ccusage 的 `bin` 欄位找到入口檔，以 node 直接執行，不經 npx 與 shell
 
 官方 `rate_limits` (Weekly 卡牌與 5 小時卡牌官方百分比) 另走一條資料流：
 
