@@ -14,7 +14,10 @@
 
 純規劃或文件的 commit 不單獨發版，併入實作完成的該版本。
 
-## [Unreleased]
+## [1.4.1] - 2026-10-03
+
+ccusage 改用專案內鎖定的版本直接執行，不再經過 npx；
+更新後需重新執行 `npm install`，`/api/blocks` 才能取得資料
 
 ### 變更
 
@@ -225,7 +228,7 @@
 - 輪詢失敗時保留上次資料，僅顯示更新中斷警示
 - vite dev server 啟動時自動開啟瀏覽器
 
-[Unreleased]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.4.0...HEAD
+[1.4.1]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/sweetMochi/vue-ccusage-web/compare/v1.1.0...v1.2.0
